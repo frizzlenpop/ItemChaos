@@ -1,0 +1,73 @@
+name: RandomItem
+version: '$version'
+
+main: org.frizzlenpop.randomItem.RandomItem
+api-version: '1.21'
+load: POSTWORLD
+
+commands:
+  chaos:
+    description: Toggle random drops and check coins
+    usage: /chaos <toggle|coins>
+  upgrade:
+    description: Open the upgrade shop
+    usage: /upgrade
+  shop:
+    description: Buy items with coins
+    usage: /shop
+  teams:
+    description: Manage teams (op only)
+    usage: /teams <create|add|remove|list|disband>
+    permission: chaos.admin
+  sabotage:
+    description: Sabotage other players
+    usage: /sabotage
+  boss:
+    description: Manage boss events (op only)
+    usage: /boss <spawn|setanchor|list>
+    permission: chaos.admin
+  pinata:
+    description: Spawn loot pinatas (op only)
+    usage: /pinata <spawn|setlocation|list>
+    permission: chaos.admin
+  bounty:
+    description: Place and manage bounties
+    usage: /bounty <set|list|toggle>
+  crate:
+    description: Manage mystery crates (op only)
+    usage: /crate <spawn|toggle>
+    permission: chaos.admin
+  gamble:
+    description: Gamble your coins
+    usage: /gamble <amount|toggle>
+  hotzone:
+    description: Manage hot zones (op only)
+    usage: /hotzone <start|stop|setcenter>
+    permission: chaos.admin
+  event:
+    description: Manage random events (op only)
+    usage: /event <trigger|toggle|list>
+    permission: chaos.admin
+  tradeup:
+    description: Open the trade-up GUI
+    usage: /tradeup
+  deathpenalty:
+    description: Toggle death penalty (op only)
+    usage: /deathpenalty toggle
+    permission: chaos.admin
+  leaderboard:
+    description: Manage the leaderboard (op only)
+    usage: /leaderboard <toggle|reset>
+    permission: chaos.admin
+  winners:
+    description: Show final standings
+    usage: /winners
+  coins:
+    description: Admin coin management (op only)
+    usage: /coins <give|remove|set> <player> <amount>
+    permission: chaos.admin
+
+permissions:
+  chaos.admin:
+    description: Allows admin commands
+    default: op
