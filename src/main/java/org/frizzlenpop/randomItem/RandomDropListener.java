@@ -13,6 +13,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.ItemStack;
+import org.frizzlenpop.randomItem.blockadex.BlockadexManager;
 import org.frizzlenpop.randomItem.economy.CoinManager;
 import org.frizzlenpop.randomItem.economy.ItemValueRegistry;
 import org.frizzlenpop.randomItem.events.RandomEventManager;
@@ -78,13 +79,15 @@ public class RandomDropListener implements Listener {
     private final CoinManager coinManager;
     private final UpgradeManager upgradeManager;
     private final RandomEventManager randomEventManager;
+    private final BlockadexManager blockadexManager;
 
     public RandomDropListener(RandomItem plugin, CoinManager coinManager, UpgradeManager upgradeManager,
-                              RandomEventManager randomEventManager) {
+                              RandomEventManager randomEventManager, BlockadexManager blockadexManager) {
         this.plugin = plugin;
         this.coinManager = coinManager;
         this.upgradeManager = upgradeManager;
         this.randomEventManager = randomEventManager;
+        this.blockadexManager = blockadexManager;
     }
 
     @EventHandler
@@ -99,6 +102,7 @@ public class RandomDropListener implements Listener {
 
         Material item = rollItem(uuid);
         dropOrSpawn(item, dropLoc);
+        blockadexManager.recordItem(uuid, item);
         long totalCoins = ItemValueRegistry.getValue(item);
 
         // Double drop check
@@ -106,6 +110,7 @@ public class RandomDropListener implements Listener {
         if (ddLevel > 0 && ThreadLocalRandom.current().nextDouble() < ddLevel * 0.10) {
             Material bonusItem = rollItem(uuid);
             dropOrSpawn(bonusItem, dropLoc);
+            blockadexManager.recordItem(uuid, bonusItem);
             totalCoins += ItemValueRegistry.getValue(bonusItem);
         }
 
@@ -156,12 +161,14 @@ public class RandomDropListener implements Listener {
         if (killer == null) return;
 
         UUID uuid = killer.getUniqueId();
+        blockadexManager.recordItem(uuid, item);
         long totalCoins = ItemValueRegistry.getValue(item);
 
         // Double drop check
         int ddLevel = upgradeManager.getLevel(uuid, UpgradeType.DOUBLE_DROP);
         if (ddLevel > 0 && ThreadLocalRandom.current().nextDouble() < ddLevel * 0.10) {
             Material bonusItem = rollItem(uuid);
+            blockadexManager.recordItem(uuid, bonusItem);
             EntityType bonusSpawn = SPAWN_EGG_MAP.get(bonusItem);
             if (bonusSpawn != null && ThreadLocalRandom.current().nextDouble() < 0.30) {
                 dropLoc.getWorld().spawnEntity(dropLoc, bonusSpawn);

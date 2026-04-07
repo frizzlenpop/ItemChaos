@@ -5,13 +5,18 @@ A Minecraft Paper plugin designed for YouTube content creation. Every block brok
 ## Installation
 
 1. Build the plugin with `./gradlew build`
-2. Copy `build/libs/RandomItem-1.0-SNAPSHOT.jar` to your server's `plugins/` folder
-3. Start the server - all config files generate automatically on first run
-4. Edit any `.yml` file in `plugins/RandomItem/` and restart to apply changes
+2. The JAR is automatically copied to `release/RandomItem.jar` (also available at `build/libs/`)
+3. Copy `release/RandomItem.jar` to your server's `plugins/` folder
+4. Start the server - all config files generate automatically on first run
+5. Edit any `.yml` file in `plugins/RandomItem/` and restart to apply changes
 
 ## Core Mechanic
 
-Every block you break and every mob you kill drops a **completely random item** from the game. Each drop earns you **coins** based on the item's rarity tier:
+Every block you break and every mob you kill drops a **completely random item** from the game. This includes blocks destroyed by **explosions** (TNT, creepers, etc.) - each exploded block drops a random item too.
+
+**Spawn Egg Surprise:** When a spawn egg is rolled as a random drop, there's a **30% chance** the mob will spawn alive at the drop location instead of dropping the egg. Ender Dragons and Withers are excluded from this and always drop as eggs.
+
+Each drop earns you **coins** based on the item's rarity tier:
 
 | Tier | Coin Value | Example Items |
 |------|-----------|---------------|
@@ -38,6 +43,8 @@ Every block you break and every mob you kill drops a **completely random item** 
 | `/bounty set <player> <amount>` | Place a bounty on a player |
 | `/bounty list` | View all active bounties |
 | `/winners` | Show final coin standings |
+| `/blockadex` | View your item collection progress and milestones |
+| `/blockadex top` | See the top 5 item collectors |
 
 ### Admin Commands (OP Only)
 
@@ -71,6 +78,7 @@ Every block you break and every mob you kill drops a **completely random item** 
 | `/deathpenalty toggle` | Enable/disable death coin scatter |
 | `/leaderboard toggle` | Show/hide the sidebar scoreboard |
 | `/leaderboard reset` | Refresh the leaderboard display |
+| `/blockadex toggle` | Enable/disable the Blockadex system |
 
 ---
 
@@ -240,13 +248,14 @@ loot:                          # What the crate can contain
 
 **How it works:**
 - Every X minutes, an **Ender Chest** appears at a random location within bounds
+- **Multiple crates can exist** at the same time - each new spawn adds another, it doesn't replace the old one
 - The exact **coordinates are broadcast** to all players
-- A **beam of particles** shoots upward from the crate location
-- First player to **right-click** the crate claims all the loot
+- A **beam of particles** shoots upward from each active crate location
+- First player to **right-click** a crate claims its loot (each crate is independent)
 - Each loot entry rolls independently (you can get multiple items)
 
 **Fields:**
-- `bounds` - The rectangular area where crates can spawn. Uses `getHighestBlockYAt()` so they always appear on the surface
+- `bounds` - The rectangular area where crates can spawn. Adjust `min-x`/`max-x`/`min-z`/`max-z` to control how far away crates appear. Uses `getHighestBlockYAt()` so they always appear on the surface
 - `loot[].chance` - Each entry rolls independently (not weighted selection)
 
 ---
@@ -438,6 +447,69 @@ title: "&6&lCoin Leaderboard"  # Scoreboard title (& colors supported)
 
 ---
 
+### Blockadex - `blockadex.yml`
+
+A collection tracker inspired by the Pokedex. Every unique item you receive from random drops is recorded. Reach percentage milestones to unlock permanent enhancements.
+
+```yaml
+enabled: true
+
+milestones:
+  10:                              # Percentage threshold
+    name: "Novice Collector"       # Milestone title (shown in broadcasts)
+    effect: SPEED                  # PotionEffectType name
+    amplifier: 0                   # 0 = level I, 1 = level II, etc.
+    description: "Permanent Speed I"  # Shown in /blockadex and broadcasts
+  25:
+    name: "Keen Collector"
+    effect: LUCK
+    amplifier: 0
+    description: "Permanent Luck I"
+  50:
+    name: "Expert Collector"
+    effect: STRENGTH
+    amplifier: 0
+    description: "Permanent Strength I"
+  75:
+    name: "Master Collector"
+    effect: RESISTANCE
+    amplifier: 0
+    description: "Permanent Resistance I"
+  100:
+    name: "Blockadex Complete"
+    effect: REGENERATION
+    amplifier: 0
+    description: "Permanent Regeneration I"
+```
+
+**How it works:**
+- Every unique item material you receive from random drops is tracked (block breaks, entity kills, double drops)
+- Your completion percentage is calculated against all obtainable items in the game
+- When you cross a milestone threshold, you get:
+  - A **title screen announcement**
+  - A **server-wide broadcast**
+  - A **permanent potion effect** that persists through death and relogin
+- Run `/blockadex` to see your progress, which milestones you've reached, and how many items until the next one
+- Run `/blockadex top` to see the top 5 collectors
+
+**Configuring Milestones:**
+- Change the percentage keys (10, 25, 50, 75, 100) to any values you want
+- `effect` - Any valid PotionEffectType: `SPEED`, `STRENGTH`, `RESISTANCE`, `REGENERATION`, `LUCK`, `JUMP_BOOST`, `FIRE_RESISTANCE`, `NIGHT_VISION`, etc.
+- `amplifier` - 0 = level I, 1 = level II, 2 = level III
+- Add or remove milestones as needed
+- Collection data persists in `blockadex.json`
+
+**Default Milestones:**
+| % | Name | Reward |
+|---|------|--------|
+| 10% | Novice Collector | Permanent Speed I |
+| 25% | Keen Collector | Permanent Luck I |
+| 50% | Expert Collector | Permanent Strength I |
+| 75% | Master Collector | Permanent Resistance I |
+| 100% | Blockadex Complete | Permanent Regeneration I |
+
+---
+
 ### Sabotage System (`/sabotage`)
 
 Players spend coins to apply disruptive effects on other players or entire teams.
@@ -467,6 +539,7 @@ The plugin saves the following JSON files to `plugins/RandomItem/`:
 | `upgrades.json` | Player upgrade levels | Every 5 minutes + on shutdown |
 | `teams.json` | Team rosters | Every 5 minutes + on shutdown |
 | `bounties.json` | Active bounties | Every 5 minutes + on shutdown |
+| `blockadex.json` | Player item collections | Every 5 minutes + on shutdown |
 
 ---
 
@@ -476,7 +549,7 @@ The plugin saves the following JSON files to `plugins/RandomItem/`:
 |-----------|---------|-------------|
 | `chaos.admin` | OP | Access to all admin commands (toggle, teams, boss, pinata, crate, hotzone, event, deathpenalty, leaderboard, coins) |
 
-All player-facing commands (`/shop`, `/upgrade`, `/sabotage`, `/gamble`, `/bounty set/list`, `/tradeup`, `/chaos coins`, `/winners`) require no special permissions.
+All player-facing commands (`/shop`, `/upgrade`, `/sabotage`, `/gamble`, `/bounty set/list`, `/tradeup`, `/chaos coins`, `/winners`, `/blockadex`, `/blockadex top`) require no special permissions.
 
 ---
 
@@ -489,4 +562,5 @@ All player-facing commands (`/shop`, `/upgrade`, `/sabotage`, `/gamble`, `/bount
 5. **Hot Zone Battles:** Start a hot zone to force PvP encounters
 6. **Gambling Segments:** Have players gamble their earnings for high-risk moments
 7. **Bounty Drama:** Place large bounties to create player-hunting segments
-8. **Video Outro:** Use `/winners` to show final standings
+8. **Blockadex Race:** Challenge players to reach 50% Blockadex completion - the milestone effects create natural power progression
+9. **Video Outro:** Use `/winners` and `/blockadex top` to show final standings

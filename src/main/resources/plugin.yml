@@ -66,6 +66,9 @@ commands:
     description: Admin coin management (op only)
     usage: /coins <give|remove|set> <player> <amount>
     permission: chaos.admin
+  blockadex:
+    description: View your item collection progress
+    usage: /blockadex [top|toggle]
 
 permissions:
   chaos.admin:

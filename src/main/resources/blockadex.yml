@@ -1,0 +1,34 @@
+# Blockadex Configuration
+# Track unique items collected - unlock permanent effects at milestones
+# Milestones: percentage threshold -> permanent potion effect reward
+# effect: Any PotionEffectType name (SPEED, STRENGTH, RESISTANCE, LUCK, REGENERATION, etc.)
+# amplifier: 0 = level I, 1 = level II, etc.
+
+enabled: true
+
+milestones:
+  10:
+    name: "Novice Collector"
+    effect: SPEED
+    amplifier: 0
+    description: "Permanent Speed I"
+  25:
+    name: "Keen Collector"
+    effect: LUCK
+    amplifier: 0
+    description: "Permanent Luck I"
+  50:
+    name: "Expert Collector"
+    effect: STRENGTH
+    amplifier: 0
+    description: "Permanent Strength I"
+  75:
+    name: "Master Collector"
+    effect: RESISTANCE
+    amplifier: 0
+    description: "Permanent Resistance I"
+  100:
+    name: "Blockadex Complete"
+    effect: REGENERATION
+    amplifier: 0
+    description: "Permanent Regeneration I"

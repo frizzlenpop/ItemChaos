@@ -31,4 +31,15 @@ tasks {
             expand(props)
         }
     }
+
+    register<Copy>("copyToRelease") {
+        dependsOn(jar)
+        from(jar.flatMap { it.archiveFile })
+        into(rootProject.layout.projectDirectory.dir("release"))
+        rename { "RandomItem.jar" }
+    }
+
+    build {
+        finalizedBy("copyToRelease")
+    }
 }

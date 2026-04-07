@@ -9,6 +9,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.frizzlenpop.randomItem.blockadex.BlockadexManager;
+import org.frizzlenpop.randomItem.blockadex.BlockadexMilestone;
 import org.frizzlenpop.randomItem.boss.BossConfig;
 import org.frizzlenpop.randomItem.boss.BossDefinition;
 import org.frizzlenpop.randomItem.boss.BossManager;
@@ -67,6 +69,7 @@ public final class RandomItem extends JavaPlugin {
     private TradeUpGUI tradeUpGUI;
     private DeathPenaltyManager deathPenaltyManager;
     private LeaderboardManager leaderboardManager;
+    private BlockadexManager blockadexManager;
 
     @Override
     public void onEnable() {
@@ -98,10 +101,11 @@ public final class RandomItem extends JavaPlugin {
         tradeUpGUI = new TradeUpGUI(tradeUpConfig);
         deathPenaltyManager = new DeathPenaltyManager(this, coinManager);
         leaderboardManager = new LeaderboardManager(this, coinManager, teamManager);
+        blockadexManager = new BlockadexManager(this);
 
         // Register all listeners
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvents(new RandomDropListener(this, coinManager, upgradeManager, randomEventManager), this);
+        pm.registerEvents(new RandomDropListener(this, coinManager, upgradeManager, randomEventManager, blockadexManager), this);
         pm.registerEvents(upgradeManager, this);
         pm.registerEvents(upgradeGUI, this);
         pm.registerEvents(shopGUI, this);
@@ -114,6 +118,7 @@ public final class RandomItem extends JavaPlugin {
         pm.registerEvents(tradeUpGUI, this);
         pm.registerEvents(deathPenaltyManager, this);
         pm.registerEvents(leaderboardManager, this);
+        pm.registerEvents(blockadexManager, this);
 
         getLogger().info("Pure Random Drops enabled with all systems!");
     }
@@ -124,6 +129,7 @@ public final class RandomItem extends JavaPlugin {
         if (upgradeManager != null) upgradeManager.save();
         if (teamManager != null) teamManager.save();
         if (bountyManager != null) bountyManager.save();
+        if (blockadexManager != null) blockadexManager.save();
     }
 
     public boolean isChaosEnabled() {
@@ -151,6 +157,7 @@ public final class RandomItem extends JavaPlugin {
             case "leaderboard" -> handleLeaderboard(sender, args);
             case "winners" -> handleWinners(sender);
             case "coins" -> handleCoins(sender, args);
+            case "blockadex" -> handleBlockadex(sender, args);
             default -> false;
         };
     }
@@ -203,6 +210,7 @@ public final class RandomItem extends JavaPlugin {
         }
         if (cmd.equals("deathpenalty") && args.length == 1) return filter(List.of("toggle"), args[0]);
         if (cmd.equals("leaderboard") && args.length == 1) return filter(List.of("toggle", "reset"), args[0]);
+        if (cmd.equals("blockadex") && args.length == 1) return filter(List.of("top", "toggle"), args[0]);
         if (cmd.equals("coins")) {
             if (args.length == 1) return filter(List.of("give", "remove", "set"), args[0]);
             if (args.length == 2) return null;
@@ -503,6 +511,62 @@ public final class RandomItem extends JavaPlugin {
     private boolean handleWinners(CommandSender sender) {
         if (!(sender instanceof Player player)) { sender.sendMessage("Must be a player."); return true; }
         leaderboardManager.showWinners(player);
+        return true;
+    }
+
+    private boolean handleBlockadex(CommandSender sender, String[] args) {
+        if (args.length >= 1 && args[0].equalsIgnoreCase("toggle")) {
+            if (!sender.hasPermission("chaos.admin")) { sender.sendMessage(Component.text("No permission.", NamedTextColor.RED)); return true; }
+            blockadexManager.toggle();
+            sender.sendMessage(Component.text("Blockadex " + (blockadexManager.isEnabled() ? "enabled" : "disabled") + "!", NamedTextColor.GREEN));
+            return true;
+        }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("top")) {
+            sender.sendMessage(Component.text("=== Blockadex Top Collectors ===", NamedTextColor.GOLD, TextDecoration.BOLD));
+            Map<UUID, Integer> top = blockadexManager.getTopCollectors(5);
+            int rank = 1;
+            for (Map.Entry<UUID, Integer> entry : top.entrySet()) {
+                String name = Bukkit.getOfflinePlayer(entry.getKey()).getName();
+                if (name == null) name = entry.getKey().toString().substring(0, 8);
+                int pct = (int) ((entry.getValue() * 100L) / blockadexManager.getTotalItems());
+                sender.sendMessage(Component.text("#" + rank + " ", NamedTextColor.GRAY)
+                        .append(Component.text(name, NamedTextColor.YELLOW))
+                        .append(Component.text(" - " + entry.getValue() + "/" + blockadexManager.getTotalItems() + " (" + pct + "%)", NamedTextColor.GOLD)));
+                rank++;
+            }
+            return true;
+        }
+
+        // Default: show own progress
+        if (!(sender instanceof Player player)) { sender.sendMessage("Must be a player."); return true; }
+        UUID uuid = player.getUniqueId();
+        int collected = blockadexManager.getCollectedCount(uuid);
+        int total = blockadexManager.getTotalItems();
+        int pct = blockadexManager.getPercentage(uuid);
+
+        player.sendMessage(Component.text("=== Blockadex ===", NamedTextColor.GOLD, TextDecoration.BOLD));
+        player.sendMessage(Component.text("Collected: ", NamedTextColor.YELLOW)
+                .append(Component.text(collected + "/" + total, NamedTextColor.GREEN, TextDecoration.BOLD))
+                .append(Component.text(" (" + pct + "%)", NamedTextColor.AQUA)));
+
+        player.sendMessage(Component.text("Milestones:", NamedTextColor.GOLD));
+        for (BlockadexMilestone milestone : blockadexManager.getMilestones()) {
+            boolean reached = pct >= milestone.getPercentage();
+            NamedTextColor color = reached ? NamedTextColor.GREEN : NamedTextColor.GRAY;
+            String prefix = reached ? "\u2714 " : "\u2718 ";
+            player.sendMessage(Component.text("  " + prefix + milestone.getPercentage() + "% - " + milestone.getName(), color)
+                    .append(Component.text(" (" + milestone.getDescription() + ")", NamedTextColor.DARK_GRAY)));
+        }
+
+        // Show next milestone
+        for (BlockadexMilestone milestone : blockadexManager.getMilestones()) {
+            if (pct < milestone.getPercentage()) {
+                int needed = (int) Math.ceil((milestone.getPercentage() / 100.0) * total) - collected;
+                player.sendMessage(Component.text("Next: ", NamedTextColor.YELLOW)
+                        .append(Component.text(milestone.getName() + " at " + milestone.getPercentage() + "% (" + needed + " more items)", NamedTextColor.AQUA)));
+                break;
+            }
+        }
         return true;
     }
 
