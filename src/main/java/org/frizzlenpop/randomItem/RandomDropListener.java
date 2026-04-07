@@ -17,6 +17,7 @@ import org.frizzlenpop.randomItem.blockadex.BlockadexManager;
 import org.frizzlenpop.randomItem.economy.CoinManager;
 import org.frizzlenpop.randomItem.economy.ItemValueRegistry;
 import org.frizzlenpop.randomItem.events.RandomEventManager;
+import org.frizzlenpop.randomItem.loottiers.LootTierManager;
 import org.frizzlenpop.randomItem.upgrade.UpgradeManager;
 import org.frizzlenpop.randomItem.upgrade.UpgradeType;
 
@@ -80,14 +81,17 @@ public class RandomDropListener implements Listener {
     private final UpgradeManager upgradeManager;
     private final RandomEventManager randomEventManager;
     private final BlockadexManager blockadexManager;
+    private final LootTierManager lootTierManager;
 
     public RandomDropListener(RandomItem plugin, CoinManager coinManager, UpgradeManager upgradeManager,
-                              RandomEventManager randomEventManager, BlockadexManager blockadexManager) {
+                              RandomEventManager randomEventManager, BlockadexManager blockadexManager,
+                              LootTierManager lootTierManager) {
         this.plugin = plugin;
         this.coinManager = coinManager;
         this.upgradeManager = upgradeManager;
         this.randomEventManager = randomEventManager;
         this.blockadexManager = blockadexManager;
+        this.lootTierManager = lootTierManager;
     }
 
     @EventHandler
@@ -99,6 +103,9 @@ public class RandomDropListener implements Listener {
         Player player = event.getPlayer();
         UUID uuid = player.getUniqueId();
         Location dropLoc = event.getBlock().getLocation();
+
+        // Track block mined for loot tier progression
+        lootTierManager.recordBlockMined(uuid);
 
         Material item = rollItem(uuid);
         dropOrSpawn(item, dropLoc);
@@ -132,7 +139,7 @@ public class RandomDropListener implements Listener {
         }
 
         for (Block block : event.blockList()) {
-            Material item = getRandomItem();
+            Material item = getRandomItem(null);
             dropOrSpawn(item, block.getLocation());
         }
         // Clear the block list so normal drops don't happen, but blocks still get destroyed
@@ -146,11 +153,10 @@ public class RandomDropListener implements Listener {
         event.getDrops().clear();
 
         Player killer = event.getEntity().getKiller();
-        Material item = killer != null ? rollItem(killer.getUniqueId()) : getRandomItem();
+        Material item = killer != null ? rollItem(killer.getUniqueId()) : getRandomItem(null);
         Location dropLoc = event.getEntity().getLocation();
 
         // For entity death, spawn eggs that become mobs need special handling
-        // since we can't use event.getDrops() for spawned mobs
         EntityType spawnType = SPAWN_EGG_MAP.get(item);
         if (spawnType != null && ThreadLocalRandom.current().nextDouble() < 0.30) {
             dropLoc.getWorld().spawnEntity(dropLoc, spawnType);
@@ -198,7 +204,7 @@ public class RandomDropListener implements Listener {
     }
 
     private Material rollItem(UUID uuid) {
-        // Legendary Minute event overrides all drops to rare
+        // Legendary Minute event overrides all drops to rare (bypasses tier restrictions)
         if (randomEventManager != null && randomEventManager.isLegendaryMinuteActive()) {
             return RARE_ITEMS.get(ThreadLocalRandom.current().nextInt(RARE_ITEMS.size()));
         }
@@ -207,7 +213,7 @@ public class RandomDropListener implements Listener {
         if (luckyLevel > 0 && ThreadLocalRandom.current().nextDouble() < luckyLevel * 0.05) {
             return RARE_ITEMS.get(ThreadLocalRandom.current().nextInt(RARE_ITEMS.size()));
         }
-        return getRandomItem();
+        return getRandomItem(uuid);
     }
 
     private long applyMultiplier(UUID uuid, long baseCoins) {
@@ -228,7 +234,14 @@ public class RandomDropListener implements Listener {
         return result;
     }
 
-    private Material getRandomItem() {
+    /**
+     * Returns a random item. If loot tiers are enabled and uuid is provided,
+     * filters by the player's current tier. Otherwise uses the full item pool.
+     */
+    private Material getRandomItem(UUID uuid) {
+        if (uuid != null && lootTierManager.isEnabled()) {
+            return lootTierManager.getRandomItemForPlayer(uuid);
+        }
         return VALID_ITEMS.get(ThreadLocalRandom.current().nextInt(VALID_ITEMS.size()));
     }
 }

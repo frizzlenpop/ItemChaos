@@ -25,6 +25,7 @@ import org.frizzlenpop.randomItem.events.RandomEventManager;
 import org.frizzlenpop.randomItem.gambling.GamblingManager;
 import org.frizzlenpop.randomItem.hotzone.HotZoneManager;
 import org.frizzlenpop.randomItem.leaderboard.LeaderboardManager;
+import org.frizzlenpop.randomItem.loottiers.LootTierManager;
 import org.frizzlenpop.randomItem.pinata.PinataConfig;
 import org.frizzlenpop.randomItem.pinata.PinataManager;
 import org.frizzlenpop.randomItem.sabotage.SabotageGUI;
@@ -70,6 +71,7 @@ public final class RandomItem extends JavaPlugin {
     private DeathPenaltyManager deathPenaltyManager;
     private LeaderboardManager leaderboardManager;
     private BlockadexManager blockadexManager;
+    private LootTierManager lootTierManager;
 
     @Override
     public void onEnable() {
@@ -102,10 +104,11 @@ public final class RandomItem extends JavaPlugin {
         deathPenaltyManager = new DeathPenaltyManager(this, coinManager);
         leaderboardManager = new LeaderboardManager(this, coinManager, teamManager);
         blockadexManager = new BlockadexManager(this);
+        lootTierManager = new LootTierManager(this);
 
         // Register all listeners
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvents(new RandomDropListener(this, coinManager, upgradeManager, randomEventManager, blockadexManager), this);
+        pm.registerEvents(new RandomDropListener(this, coinManager, upgradeManager, randomEventManager, blockadexManager, lootTierManager), this);
         pm.registerEvents(upgradeManager, this);
         pm.registerEvents(upgradeGUI, this);
         pm.registerEvents(shopGUI, this);
@@ -119,6 +122,7 @@ public final class RandomItem extends JavaPlugin {
         pm.registerEvents(deathPenaltyManager, this);
         pm.registerEvents(leaderboardManager, this);
         pm.registerEvents(blockadexManager, this);
+        pm.registerEvents(lootTierManager, this);
 
         getLogger().info("Pure Random Drops enabled with all systems!");
     }
@@ -130,6 +134,7 @@ public final class RandomItem extends JavaPlugin {
         if (teamManager != null) teamManager.save();
         if (bountyManager != null) bountyManager.save();
         if (blockadexManager != null) blockadexManager.save();
+        if (lootTierManager != null) lootTierManager.save();
     }
 
     public boolean isChaosEnabled() {
@@ -158,6 +163,7 @@ public final class RandomItem extends JavaPlugin {
             case "winners" -> handleWinners(sender);
             case "coins" -> handleCoins(sender, args);
             case "blockadex" -> handleBlockadex(sender, args);
+            case "loottiers" -> handleLootTiers(sender, args);
             default -> false;
         };
     }
@@ -211,6 +217,10 @@ public final class RandomItem extends JavaPlugin {
         if (cmd.equals("deathpenalty") && args.length == 1) return filter(List.of("toggle"), args[0]);
         if (cmd.equals("leaderboard") && args.length == 1) return filter(List.of("toggle", "reset"), args[0]);
         if (cmd.equals("blockadex") && args.length == 1) return filter(List.of("top", "toggle"), args[0]);
+        if (cmd.equals("loottiers")) {
+            if (args.length == 1) return filter(List.of("top", "toggle", "reset"), args[0]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("reset")) return null; // player names
+        }
         if (cmd.equals("coins")) {
             if (args.length == 1) return filter(List.of("give", "remove", "set"), args[0]);
             if (args.length == 2) return null;
@@ -511,6 +521,85 @@ public final class RandomItem extends JavaPlugin {
     private boolean handleWinners(CommandSender sender) {
         if (!(sender instanceof Player player)) { sender.sendMessage("Must be a player."); return true; }
         leaderboardManager.showWinners(player);
+        return true;
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean handleLootTiers(CommandSender sender, String[] args) {
+        if (args.length >= 1 && args[0].equalsIgnoreCase("toggle")) {
+            if (!sender.hasPermission("chaos.admin")) { sender.sendMessage(Component.text("No permission.", NamedTextColor.RED)); return true; }
+            lootTierManager.toggle();
+            sender.sendMessage(Component.text("Loot Tiers " + (lootTierManager.isEnabled() ? "enabled" : "disabled") + "!", NamedTextColor.GREEN));
+            return true;
+        }
+        if (args.length >= 2 && args[0].equalsIgnoreCase("reset")) {
+            if (!sender.hasPermission("chaos.admin")) { sender.sendMessage(Component.text("No permission.", NamedTextColor.RED)); return true; }
+            Player target = Bukkit.getPlayer(args[1]);
+            if (target == null) { sender.sendMessage(Component.text("Player not found!", NamedTextColor.RED)); return true; }
+            lootTierManager.resetPlayer(target.getUniqueId());
+            sender.sendMessage(Component.text("Reset " + target.getName() + "'s loot tier progress!", NamedTextColor.GREEN));
+            return true;
+        }
+        if (args.length >= 1 && args[0].equalsIgnoreCase("top")) {
+            sender.sendMessage(Component.text("=== Top Miners ===", NamedTextColor.DARK_PURPLE, TextDecoration.BOLD));
+            Map<UUID, Long> top = lootTierManager.getTopMiners(5);
+            int rank = 1;
+            for (Map.Entry<UUID, Long> entry : top.entrySet()) {
+                String name = Bukkit.getOfflinePlayer(entry.getKey()).getName();
+                if (name == null) name = entry.getKey().toString().substring(0, 8);
+                LootTierManager.LootTier tier = lootTierManager.getCurrentTier(entry.getKey());
+                String tierName = tier != null ? org.bukkit.ChatColor.translateAlternateColorCodes('&', tier.name()) : "None";
+                sender.sendMessage(Component.text("#" + rank + " ", NamedTextColor.GRAY)
+                        .append(Component.text(name, NamedTextColor.YELLOW))
+                        .append(Component.text(" - " + entry.getValue() + " blocks - " + tierName, NamedTextColor.GOLD)));
+                rank++;
+            }
+            return true;
+        }
+
+        // Default: show own progress
+        if (!(sender instanceof Player player)) { sender.sendMessage("Must be a player."); return true; }
+        UUID uuid = player.getUniqueId();
+        long mined = lootTierManager.getBlocksMined(uuid);
+        LootTierManager.LootTier current = lootTierManager.getCurrentTier(uuid);
+        LootTierManager.LootTier next = lootTierManager.getNextTier(uuid);
+
+        player.sendMessage(Component.text("=== Loot Tiers ===", NamedTextColor.DARK_PURPLE, TextDecoration.BOLD));
+        player.sendMessage(Component.text("Blocks mined: ", NamedTextColor.LIGHT_PURPLE)
+                .append(Component.text(String.valueOf(mined), NamedTextColor.GREEN, TextDecoration.BOLD)));
+
+        if (current != null) {
+            String coloredName = org.bukkit.ChatColor.translateAlternateColorCodes('&', current.name());
+            player.sendMessage(Component.text("Current dimension: ", NamedTextColor.LIGHT_PURPLE)
+                    .append(Component.text(coloredName, NamedTextColor.GOLD, TextDecoration.BOLD)));
+        }
+
+        // Show all tiers with progress
+        player.sendMessage(Component.text("Dimensions:", NamedTextColor.LIGHT_PURPLE));
+        for (LootTierManager.LootTier tier : lootTierManager.getTiers()) {
+            boolean unlocked = mined >= tier.blocksRequired();
+            NamedTextColor color = unlocked ? NamedTextColor.GREEN : NamedTextColor.GRAY;
+            String prefix = unlocked ? "\u2714 " : "\u2718 ";
+            String coloredName = org.bukkit.ChatColor.translateAlternateColorCodes('&', tier.name());
+            player.sendMessage(Component.text("  " + prefix, color)
+                    .append(Component.text(coloredName))
+                    .append(Component.text(" (" + tier.blocksRequired() + " blocks)", NamedTextColor.DARK_GRAY)));
+        }
+
+        if (next != null) {
+            long remaining = next.blocksRequired() - mined;
+            String nextName = org.bukkit.ChatColor.translateAlternateColorCodes('&', next.name());
+            player.sendMessage(Component.text("Next: ", NamedTextColor.YELLOW)
+                    .append(Component.text(nextName))
+                    .append(Component.text(" in " + remaining + " blocks", NamedTextColor.AQUA)));
+        } else {
+            player.sendMessage(Component.text("All dimensions unlocked!", NamedTextColor.GOLD, TextDecoration.BOLD));
+        }
+
+        player.sendMessage(Component.text("Status: ", NamedTextColor.LIGHT_PURPLE)
+                .append(Component.text(lootTierManager.isEnabled() ? "ACTIVE" : "INACTIVE",
+                        lootTierManager.isEnabled() ? NamedTextColor.GREEN : NamedTextColor.RED)));
+
         return true;
     }
 

@@ -1,0 +1,44 @@
+# Loot Tiers Progression - "Loot Dimensions"
+# When enabled, players start with only junk-tier drops.
+# Mining blocks unlocks higher-tier loot pools progressively.
+# OFF by default - this fundamentally changes gameplay, opt-in only.
+
+enabled: false
+
+# Each tier defines:
+#   blocks-required: how many blocks must be mined to unlock this tier
+#   max-item-value: items with coin value up to this amount are included
+#                   (uses the same value system as the coin economy)
+#   name: display name with & color codes (shown in titles/broadcasts)
+#   description: flavor text shown on unlock
+
+tiers:
+  junk:
+    blocks-required: 0
+    max-item-value: 1
+    name: "&7Junk Dimension"
+    description: "Only the basics..."
+
+  common:
+    blocks-required: 50
+    max-item-value: 3
+    name: "&fCommon Realm"
+    description: "Wood, stone, and coal appear!"
+
+  uncommon:
+    blocks-required: 200
+    max-item-value: 8
+    name: "&aUncommon Frontier"
+    description: "Iron, gold, and redstone unlocked!"
+
+  rare:
+    blocks-required: 500
+    max-item-value: 20
+    name: "&9Rare Expanse"
+    description: "Diamonds and emeralds flow!"
+
+  legendary:
+    blocks-required: 1000
+    max-item-value: 999
+    name: "&6&lLegendary Apex"
+    description: "All items unlocked! Netherite, Elytra, everything!"
