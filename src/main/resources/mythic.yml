@@ -1,0 +1,13 @@
+# Mythic Items Configuration
+# Custom overpowered gear with max enchantments
+# These drop as fully enchanted items with custom names and lore
+
+enabled: true
+
+# Chance (%) that a drop in Legendary tier gets upgraded to a Mythic item
+# Works whether loot tiers system is on or off
+drop-chance-in-legendary: 5
+
+# Blocks required to unlock the Mythic Dimension (only used if loot tiers enabled)
+# In the Mythic Dimension, the drop chance above applies to ALL drops
+mythic-tier-blocks: 2000

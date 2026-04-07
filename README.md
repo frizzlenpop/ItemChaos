@@ -45,6 +45,8 @@ Each drop earns you **coins** based on the item's rarity tier:
 | `/winners` | Show final coin standings |
 | `/blockadex` | View your item collection progress and milestones |
 | `/blockadex top` | See the top 5 item collectors |
+| `/loottiers` | View your loot tier progression and current dimension |
+| `/loottiers top` | See the top 5 block miners |
 
 ### Admin Commands (OP Only)
 
@@ -79,6 +81,8 @@ Each drop earns you **coins** based on the item's rarity tier:
 | `/leaderboard toggle` | Show/hide the sidebar scoreboard |
 | `/leaderboard reset` | Refresh the leaderboard display |
 | `/blockadex toggle` | Enable/disable the Blockadex system |
+| `/loottiers toggle` | Enable/disable loot tier progression |
+| `/loottiers reset <player>` | Reset a player's loot tier progress |
 
 ---
 
@@ -510,6 +514,72 @@ milestones:
 
 ---
 
+### Loot Tiers / Loot Dimensions - `loottiers.yml`
+
+A tiered loot progression system. Players start in the "Junk Dimension" where only basic items can drop. Mining blocks breaks through dimensional barriers, progressively unlocking richer loot pools. **Disabled by default** — this is an opt-in feature that fundamentally changes gameplay.
+
+```yaml
+enabled: false    # Off by default — set to true to activate
+
+tiers:
+  junk:
+    blocks-required: 0           # Blocks player must mine to unlock this tier
+    max-item-value: 1            # Items with coin value up to this are included
+    name: "&7Junk Dimension"     # Display name (& color codes supported)
+    description: "Only the basics..."  # Shown on unlock
+  common:
+    blocks-required: 50
+    max-item-value: 3
+    name: "&fCommon Realm"
+    description: "Wood, stone, and coal appear!"
+  uncommon:
+    blocks-required: 200
+    max-item-value: 8
+    name: "&aUncommon Frontier"
+    description: "Iron, gold, and redstone unlocked!"
+  rare:
+    blocks-required: 500
+    max-item-value: 20
+    name: "&9Rare Expanse"
+    description: "Diamonds and emeralds flow!"
+  legendary:
+    blocks-required: 1000
+    max-item-value: 999
+    name: "&6&lLegendary Apex"
+    description: "All items unlocked! Netherite, Elytra, everything!"
+```
+
+**How it works:**
+- Each player starts at the lowest tier (Junk Dimension) — only items worth 1 coin can drop
+- Mining blocks increases the player's block count. When they hit a tier threshold, they **break through** to the next dimension
+- Tier unlocks trigger a **"DIMENSION BREACH!" title screen**, a **server-wide broadcast**, and an **ender dragon growl sound**
+- Each tier includes all items from its level **and all lower tiers** (cumulative pools)
+- Item pools are pre-built at startup for performance — no lag per drop
+- Progress is per-player — one player can be in Legendary while another is in Common
+
+**Default Progression:**
+| Blocks Mined | Dimension | New Items Unlocked |
+|---|---|---|
+| 0 | Junk Dimension | Only junk items (sticks, misc blocks, etc.) |
+| 50 | Common Realm | + Wood, stone, coal, leather, wool, sand |
+| 200 | Uncommon Frontier | + Iron, gold, redstone, copper, quartz |
+| 500 | Rare Expanse | + Diamond, emerald, ender pearl, golden apple |
+| 1000 | Legendary Apex | + Netherite, elytra, beacon, nether star, trident |
+
+**Configuring Tiers:**
+- `blocks-required` - How many blocks must be mined to unlock. Set to 0 for the starting tier
+- `max-item-value` - Items with a coin value (from the item value system) up to this number are included. The default values (1, 3, 8, 20, 999) align with the existing coin tiers
+- Add, remove, or reorder tiers as needed. The system sorts by `blocks-required` automatically
+- Rename dimensions and descriptions for your video theme
+
+**Special Overrides:**
+- The **Legendary Minute** random event bypasses tier restrictions — all players get rare drops regardless of their tier (it's meant to be a special moment)
+- The **Lucky Drops** upgrade also bypasses restrictions — players who invested coins deserve the payoff
+
+**Data:** Persists in `loottiers.json` across restarts.
+
+---
+
 ### Sabotage System (`/sabotage`)
 
 Players spend coins to apply disruptive effects on other players or entire teams.
@@ -540,6 +610,7 @@ The plugin saves the following JSON files to `plugins/RandomItem/`:
 | `teams.json` | Team rosters | Every 5 minutes + on shutdown |
 | `bounties.json` | Active bounties | Every 5 minutes + on shutdown |
 | `blockadex.json` | Player item collections | Every 5 minutes + on shutdown |
+| `loottiers.json` | Blocks mined per player | Every 5 minutes + on shutdown |
 
 ---
 
@@ -549,7 +620,7 @@ The plugin saves the following JSON files to `plugins/RandomItem/`:
 |-----------|---------|-------------|
 | `chaos.admin` | OP | Access to all admin commands (toggle, teams, boss, pinata, crate, hotzone, event, deathpenalty, leaderboard, coins) |
 
-All player-facing commands (`/shop`, `/upgrade`, `/sabotage`, `/gamble`, `/bounty set/list`, `/tradeup`, `/chaos coins`, `/winners`, `/blockadex`, `/blockadex top`) require no special permissions.
+All player-facing commands (`/shop`, `/upgrade`, `/sabotage`, `/gamble`, `/bounty set/list`, `/tradeup`, `/chaos coins`, `/winners`, `/blockadex`, `/blockadex top`, `/loottiers`, `/loottiers top`) require no special permissions.
 
 ---
 
@@ -563,4 +634,5 @@ All player-facing commands (`/shop`, `/upgrade`, `/sabotage`, `/gamble`, `/bount
 6. **Gambling Segments:** Have players gamble their earnings for high-risk moments
 7. **Bounty Drama:** Place large bounties to create player-hunting segments
 8. **Blockadex Race:** Challenge players to reach 50% Blockadex completion - the milestone effects create natural power progression
-9. **Video Outro:** Use `/winners` and `/blockadex top` to show final standings
+9. **Loot Dimensions:** Enable loot tiers for an RPG-style progression arc — early game scrounging builds to late game abundance
+10. **Video Outro:** Use `/winners`, `/blockadex top`, and `/loottiers top` to show final standings

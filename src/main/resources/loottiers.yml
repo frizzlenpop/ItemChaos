@@ -42,3 +42,9 @@ tiers:
     max-item-value: 999
     name: "&6&lLegendary Apex"
     description: "All items unlocked! Netherite, Elytra, everything!"
+
+  mythic:
+    blocks-required: 2000
+    max-item-value: 999
+    name: "&d&lMythic Dimension"
+    description: "Custom legendary gear with max enchantments!"

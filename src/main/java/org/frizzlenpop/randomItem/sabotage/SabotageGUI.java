@@ -29,7 +29,12 @@ public class SabotageGUI implements Listener {
     private static final Material[] TEAM_BANNERS = {
             Material.RED_BANNER, Material.BLUE_BANNER, Material.GREEN_BANNER, Material.YELLOW_BANNER
     };
-    private static final int[] TYPE_SLOTS = {10, 11, 12, 13, 14, 15, 16, 17};
+    // 18 sabotage types across rows 2-4 of a 54-slot chest
+    private static final int[] TYPE_SLOTS = {
+            10, 11, 12, 13, 14, 15, 16,  // Row 2
+            19, 20, 21, 22, 23, 24, 25,  // Row 3
+            28, 29, 30, 31               // Row 4
+    };
 
     private final SabotageManager sabotageManager;
     private final CoinManager coinManager;
@@ -117,7 +122,7 @@ public class SabotageGUI implements Listener {
     }
 
     private void openTypeGUI(Player attacker) {
-        Inventory inv = Bukkit.createInventory(null, 27, TITLE_TYPE);
+        Inventory inv = Bukkit.createInventory(null, 54, TITLE_TYPE);
         long playerCoins = coinManager.getCoins(attacker.getUniqueId());
 
         // Fill with glass
@@ -125,7 +130,7 @@ public class SabotageGUI implements Listener {
         ItemMeta fillerMeta = filler.getItemMeta();
         fillerMeta.displayName(Component.empty());
         filler.setItemMeta(fillerMeta);
-        for (int i = 0; i < 27; i++) {
+        for (int i = 0; i < 54; i++) {
             inv.setItem(i, filler);
         }
 

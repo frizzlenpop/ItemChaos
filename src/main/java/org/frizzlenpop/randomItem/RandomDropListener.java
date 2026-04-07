@@ -2,6 +2,8 @@ package org.frizzlenpop.randomItem;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
@@ -18,6 +20,7 @@ import org.frizzlenpop.randomItem.economy.CoinManager;
 import org.frizzlenpop.randomItem.economy.ItemValueRegistry;
 import org.frizzlenpop.randomItem.events.RandomEventManager;
 import org.frizzlenpop.randomItem.loottiers.LootTierManager;
+import org.frizzlenpop.randomItem.mythic.MythicItemRegistry;
 import org.frizzlenpop.randomItem.upgrade.UpgradeManager;
 import org.frizzlenpop.randomItem.upgrade.UpgradeType;
 
@@ -82,16 +85,18 @@ public class RandomDropListener implements Listener {
     private final RandomEventManager randomEventManager;
     private final BlockadexManager blockadexManager;
     private final LootTierManager lootTierManager;
+    private final MythicItemRegistry mythicItemRegistry;
 
     public RandomDropListener(RandomItem plugin, CoinManager coinManager, UpgradeManager upgradeManager,
                               RandomEventManager randomEventManager, BlockadexManager blockadexManager,
-                              LootTierManager lootTierManager) {
+                              LootTierManager lootTierManager, MythicItemRegistry mythicItemRegistry) {
         this.plugin = plugin;
         this.coinManager = coinManager;
         this.upgradeManager = upgradeManager;
         this.randomEventManager = randomEventManager;
         this.blockadexManager = blockadexManager;
         this.lootTierManager = lootTierManager;
+        this.mythicItemRegistry = mythicItemRegistry;
     }
 
     @EventHandler
@@ -107,18 +112,35 @@ public class RandomDropListener implements Listener {
         // Track block mined for loot tier progression
         lootTierManager.recordBlockMined(uuid);
 
-        Material item = rollItem(uuid);
-        dropOrSpawn(item, dropLoc);
-        blockadexManager.recordItem(uuid, item);
-        long totalCoins = ItemValueRegistry.getValue(item);
+        // Check for mythic drop first
+        ItemStack mythicDrop = rollMythicDrop(uuid);
+        long totalCoins;
+
+        if (mythicDrop != null) {
+            dropLoc.getWorld().dropItemNaturally(dropLoc, mythicDrop);
+            totalCoins = 100; // Mythic items are always worth 100 coins
+            announceMythicDrop(player, mythicDrop);
+        } else {
+            Material item = rollItem(uuid);
+            dropOrSpawn(item, dropLoc);
+            blockadexManager.recordItem(uuid, item);
+            totalCoins = ItemValueRegistry.getValue(item);
+        }
 
         // Double drop check
         int ddLevel = upgradeManager.getLevel(uuid, UpgradeType.DOUBLE_DROP);
         if (ddLevel > 0 && ThreadLocalRandom.current().nextDouble() < ddLevel * 0.10) {
-            Material bonusItem = rollItem(uuid);
-            dropOrSpawn(bonusItem, dropLoc);
-            blockadexManager.recordItem(uuid, bonusItem);
-            totalCoins += ItemValueRegistry.getValue(bonusItem);
+            ItemStack bonusMythic = rollMythicDrop(uuid);
+            if (bonusMythic != null) {
+                dropLoc.getWorld().dropItemNaturally(dropLoc, bonusMythic);
+                totalCoins += 100;
+                announceMythicDrop(player, bonusMythic);
+            } else {
+                Material bonusItem = rollItem(uuid);
+                dropOrSpawn(bonusItem, dropLoc);
+                blockadexManager.recordItem(uuid, bonusItem);
+                totalCoins += ItemValueRegistry.getValue(bonusItem);
+            }
         }
 
         // Coin multiplier
@@ -153,35 +175,50 @@ public class RandomDropListener implements Listener {
         event.getDrops().clear();
 
         Player killer = event.getEntity().getKiller();
-        Material item = killer != null ? rollItem(killer.getUniqueId()) : getRandomItem(null);
         Location dropLoc = event.getEntity().getLocation();
 
-        // For entity death, spawn eggs that become mobs need special handling
-        EntityType spawnType = SPAWN_EGG_MAP.get(item);
-        if (spawnType != null && ThreadLocalRandom.current().nextDouble() < 0.30) {
-            dropLoc.getWorld().spawnEntity(dropLoc, spawnType);
+        // Check for mythic drop if killer exists
+        ItemStack mythicDrop = killer != null ? rollMythicDrop(killer.getUniqueId()) : null;
+
+        if (mythicDrop != null) {
+            event.getDrops().add(mythicDrop);
         } else {
-            event.getDrops().add(new ItemStack(item));
+            Material item = killer != null ? rollItem(killer.getUniqueId()) : getRandomItem(null);
+            EntityType spawnType = SPAWN_EGG_MAP.get(item);
+            if (spawnType != null && ThreadLocalRandom.current().nextDouble() < 0.30) {
+                dropLoc.getWorld().spawnEntity(dropLoc, spawnType);
+            } else {
+                event.getDrops().add(new ItemStack(item));
+            }
+            if (killer != null) blockadexManager.recordItem(killer.getUniqueId(), item);
         }
 
         if (killer == null) return;
 
         UUID uuid = killer.getUniqueId();
-        blockadexManager.recordItem(uuid, item);
-        long totalCoins = ItemValueRegistry.getValue(item);
+        long totalCoins = mythicDrop != null ? 100 : ItemValueRegistry.getValue(event.getDrops().isEmpty() ? Material.STONE : event.getDrops().getFirst().getType());
+
+        if (mythicDrop != null) announceMythicDrop(killer, mythicDrop);
 
         // Double drop check
         int ddLevel = upgradeManager.getLevel(uuid, UpgradeType.DOUBLE_DROP);
         if (ddLevel > 0 && ThreadLocalRandom.current().nextDouble() < ddLevel * 0.10) {
-            Material bonusItem = rollItem(uuid);
-            blockadexManager.recordItem(uuid, bonusItem);
-            EntityType bonusSpawn = SPAWN_EGG_MAP.get(bonusItem);
-            if (bonusSpawn != null && ThreadLocalRandom.current().nextDouble() < 0.30) {
-                dropLoc.getWorld().spawnEntity(dropLoc, bonusSpawn);
+            ItemStack bonusMythic = rollMythicDrop(uuid);
+            if (bonusMythic != null) {
+                event.getDrops().add(bonusMythic);
+                totalCoins += 100;
+                announceMythicDrop(killer, bonusMythic);
             } else {
-                event.getDrops().add(new ItemStack(bonusItem));
+                Material bonusItem = rollItem(uuid);
+                blockadexManager.recordItem(uuid, bonusItem);
+                EntityType bonusSpawn = SPAWN_EGG_MAP.get(bonusItem);
+                if (bonusSpawn != null && ThreadLocalRandom.current().nextDouble() < 0.30) {
+                    dropLoc.getWorld().spawnEntity(dropLoc, bonusSpawn);
+                } else {
+                    event.getDrops().add(new ItemStack(bonusItem));
+                }
+                totalCoins += ItemValueRegistry.getValue(bonusItem);
             }
-            totalCoins += ItemValueRegistry.getValue(bonusItem);
         }
 
         totalCoins = applyMultiplier(uuid, totalCoins);
@@ -243,5 +280,44 @@ public class RandomDropListener implements Listener {
             return lootTierManager.getRandomItemForPlayer(uuid);
         }
         return VALID_ITEMS.get(ThreadLocalRandom.current().nextInt(VALID_ITEMS.size()));
+    }
+
+    /**
+     * Checks if a mythic item should drop. Returns the mythic ItemStack or null.
+     * Drop chance depends on whether the player is in the Mythic loot tier or just Legendary.
+     */
+    private ItemStack rollMythicDrop(UUID uuid) {
+        if (!mythicItemRegistry.isEnabled()) return null;
+
+        int chance = mythicItemRegistry.getDropChanceInLegendary();
+
+        // If loot tiers enabled, check if player is in the mythic tier
+        if (lootTierManager.isEnabled()) {
+            long blocksMined = lootTierManager.getBlocksMined(uuid);
+            if (blocksMined < mythicItemRegistry.getMythicTierBlocks()) {
+                return null; // Haven't unlocked mythic tier yet
+            }
+            // In mythic tier — use the configured chance
+        } else {
+            // Loot tiers disabled — mythic can proc on any drop at the configured chance
+        }
+
+        if (ThreadLocalRandom.current().nextInt(100) < chance) {
+            return mythicItemRegistry.getRandomMythicItem();
+        }
+        return null;
+    }
+
+    private void announceMythicDrop(Player player, ItemStack item) {
+        Component itemName = item.getItemMeta().displayName();
+        if (itemName == null) itemName = Component.text(item.getType().name());
+
+        Bukkit.broadcast(Component.text("[MYTHIC] ", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD)
+                .append(Component.text(player.getName(), NamedTextColor.YELLOW))
+                .append(Component.text(" found ", NamedTextColor.LIGHT_PURPLE))
+                .append(itemName)
+                .append(Component.text("!", NamedTextColor.LIGHT_PURPLE)));
+
+        player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1.2f);
     }
 }

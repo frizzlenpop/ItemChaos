@@ -72,6 +72,10 @@ commands:
   loottiers:
     description: View loot tier progression
     usage: /loottiers [top|toggle|reset]
+  mythic:
+    description: Manage mythic items (op only)
+    usage: /mythic <give|list>
+    permission: chaos.admin
 
 permissions:
   chaos.admin:

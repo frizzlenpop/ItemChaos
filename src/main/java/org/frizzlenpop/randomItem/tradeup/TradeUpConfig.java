@@ -17,6 +17,8 @@ public class TradeUpConfig {
 
     private boolean enabled;
     private int inputCount;
+    private long cost;
+    private int cooldownSeconds;
     private final List<Tier> tiers = new ArrayList<>();
 
     public TradeUpConfig(RandomItem plugin) {
@@ -26,6 +28,8 @@ public class TradeUpConfig {
 
         this.enabled = config.getBoolean("enabled", true);
         this.inputCount = config.getInt("input-count", 5);
+        this.cost = config.getLong("cost", 50);
+        this.cooldownSeconds = config.getInt("cooldown-seconds", 30);
 
         ConfigurationSection tierSection = config.getConfigurationSection("tiers");
         if (tierSection != null) {
@@ -42,6 +46,8 @@ public class TradeUpConfig {
 
     public boolean isEnabled() { return enabled; }
     public int getInputCount() { return inputCount; }
+    public long getCost() { return cost; }
+    public int getCooldownSeconds() { return cooldownSeconds; }
 
     public Tier getTierForValue(int value) {
         for (Tier tier : tiers) {

@@ -33,3 +33,93 @@ events:
     duration-seconds: 30
     weight: 20
     type: COIN_RAIN
+
+  - name: "Invisibility Chaos"
+    description: "Nobody can see anyone!"
+    duration-seconds: 45
+    weight: 12
+    type: INVISIBILITY_CHAOS
+
+  - name: "Speed Demons"
+    description: "Everyone moves at lightning speed!"
+    duration-seconds: 60
+    weight: 15
+    type: SPEED_DEMONS
+
+  - name: "Darkness Falls"
+    description: "The world goes dark!"
+    duration-seconds: 30
+    weight: 12
+    type: DARKNESS_FALLS
+
+  - name: "TNT Party"
+    description: "TNT rains from the sky on random players!"
+    duration-seconds: 30
+    weight: 10
+    type: TNT_PARTY
+
+  - name: "Mob Mayhem"
+    description: "Hostile mobs spawn around everyone!"
+    duration-seconds: 45
+    weight: 10
+    type: MOB_MAYHEM
+
+  - name: "Inventory Roulette"
+    description: "Everyone's inventory gets shuffled!"
+    duration-seconds: 1
+    weight: 12
+    type: INVENTORY_ROULETTE
+
+  - name: "Coin Tax"
+    description: "The taxman cometh! 10% coins redistributed!"
+    duration-seconds: 1
+    weight: 10
+    type: COIN_TAX
+
+  - name: "Size Swap"
+    description: "Everyone feels heavy and powerful!"
+    duration-seconds: 30
+    weight: 12
+    type: SIZE_SWAP
+
+  - name: "Lava Rising"
+    description: "The floor is lava! Fire everywhere!"
+    duration-seconds: 20
+    weight: 10
+    type: LAVA_RISING
+
+  - name: "Phantom Storm"
+    description: "Phantoms descend on everyone!"
+    duration-seconds: 45
+    weight: 10
+    type: PHANTOM_STORM
+
+  - name: "Tool Swap"
+    description: "Everyone's hotbar gets scrambled!"
+    duration-seconds: 1
+    weight: 12
+    type: TOOL_SWAP
+
+  - name: "Jackpot Rain"
+    description: "Mythic items drop from the sky!"
+    duration-seconds: 30
+    weight: 5
+    type: JACKPOT_RAIN
+
+  - name: "Hunger Games"
+    description: "Everyone is starving!"
+    duration-seconds: 60
+    weight: 12
+    type: HUNGER_GAMES
+
+  - name: "XP Shower"
+    description: "XP orbs rain down on everyone!"
+    duration-seconds: 30
+    weight: 15
+    type: XP_SHOWER
+
+  - name: "Creeper Surprise"
+    description: "Charged creepers are everywhere!"
+    duration-seconds: 30
+    weight: 8
+    type: CREEPER_SURPRISE

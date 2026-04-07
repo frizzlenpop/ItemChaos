@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.frizzlenpop.randomItem.blockadex.BlockadexManager;
@@ -26,6 +27,7 @@ import org.frizzlenpop.randomItem.gambling.GamblingManager;
 import org.frizzlenpop.randomItem.hotzone.HotZoneManager;
 import org.frizzlenpop.randomItem.leaderboard.LeaderboardManager;
 import org.frizzlenpop.randomItem.loottiers.LootTierManager;
+import org.frizzlenpop.randomItem.mythic.MythicItemRegistry;
 import org.frizzlenpop.randomItem.pinata.PinataConfig;
 import org.frizzlenpop.randomItem.pinata.PinataManager;
 import org.frizzlenpop.randomItem.sabotage.SabotageGUI;
@@ -41,6 +43,7 @@ import org.frizzlenpop.randomItem.upgrade.UpgradeManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -72,6 +75,7 @@ public final class RandomItem extends JavaPlugin {
     private LeaderboardManager leaderboardManager;
     private BlockadexManager blockadexManager;
     private LootTierManager lootTierManager;
+    private MythicItemRegistry mythicItemRegistry;
 
     @Override
     public void onEnable() {
@@ -100,15 +104,17 @@ public final class RandomItem extends JavaPlugin {
         hotZoneManager = new HotZoneManager(this, coinManager);
         randomEventManager = new RandomEventManager(this, coinManager);
         tradeUpConfig = new TradeUpConfig(this);
-        tradeUpGUI = new TradeUpGUI(tradeUpConfig);
+        tradeUpGUI = new TradeUpGUI(tradeUpConfig, coinManager);
         deathPenaltyManager = new DeathPenaltyManager(this, coinManager);
         leaderboardManager = new LeaderboardManager(this, coinManager, teamManager);
         blockadexManager = new BlockadexManager(this);
         lootTierManager = new LootTierManager(this);
+        mythicItemRegistry = new MythicItemRegistry(this);
+        randomEventManager.setMythicItemRegistry(mythicItemRegistry);
 
         // Register all listeners
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvents(new RandomDropListener(this, coinManager, upgradeManager, randomEventManager, blockadexManager, lootTierManager), this);
+        pm.registerEvents(new RandomDropListener(this, coinManager, upgradeManager, randomEventManager, blockadexManager, lootTierManager, mythicItemRegistry), this);
         pm.registerEvents(upgradeManager, this);
         pm.registerEvents(upgradeGUI, this);
         pm.registerEvents(shopGUI, this);
@@ -118,6 +124,7 @@ public final class RandomItem extends JavaPlugin {
         pm.registerEvents(pinataManager, this);
         pm.registerEvents(bountyManager, this);
         pm.registerEvents(crateManager, this);
+        pm.registerEvents(randomEventManager, this);
         pm.registerEvents(tradeUpGUI, this);
         pm.registerEvents(deathPenaltyManager, this);
         pm.registerEvents(leaderboardManager, this);
@@ -164,6 +171,7 @@ public final class RandomItem extends JavaPlugin {
             case "coins" -> handleCoins(sender, args);
             case "blockadex" -> handleBlockadex(sender, args);
             case "loottiers" -> handleLootTiers(sender, args);
+            case "mythic" -> handleMythic(sender, args);
             default -> false;
         };
     }
@@ -217,6 +225,11 @@ public final class RandomItem extends JavaPlugin {
         if (cmd.equals("deathpenalty") && args.length == 1) return filter(List.of("toggle"), args[0]);
         if (cmd.equals("leaderboard") && args.length == 1) return filter(List.of("toggle", "reset"), args[0]);
         if (cmd.equals("blockadex") && args.length == 1) return filter(List.of("top", "toggle"), args[0]);
+        if (cmd.equals("mythic")) {
+            if (args.length == 1) return filter(List.of("give", "list"), args[0]);
+            if (args.length == 2 && args[0].equalsIgnoreCase("give")) return null; // player names
+            if (args.length == 3 && args[0].equalsIgnoreCase("give")) return filter(List.of("random"), args[2]);
+        }
         if (cmd.equals("loottiers")) {
             if (args.length == 1) return filter(List.of("top", "toggle", "reset"), args[0]);
             if (args.length == 2 && args[0].equalsIgnoreCase("reset")) return null; // player names
@@ -521,6 +534,56 @@ public final class RandomItem extends JavaPlugin {
     private boolean handleWinners(CommandSender sender) {
         if (!(sender instanceof Player player)) { sender.sendMessage("Must be a player."); return true; }
         leaderboardManager.showWinners(player);
+        return true;
+    }
+
+    private boolean handleMythic(CommandSender sender, String[] args) {
+        if (args.length < 1) { sender.sendMessage(Component.text("Usage: /mythic <give|list>", NamedTextColor.YELLOW)); return true; }
+        if (args[0].equalsIgnoreCase("list")) {
+            sender.sendMessage(Component.text("=== Mythic Items (50) ===", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD));
+            List<ItemStack> items = mythicItemRegistry.getAllItems();
+            for (int i = 0; i < items.size(); i++) {
+                Component name = items.get(i).getItemMeta().displayName();
+                if (name == null) name = Component.text(items.get(i).getType().name());
+                sender.sendMessage(Component.text((i + 1) + ". ", NamedTextColor.GRAY).append(name));
+            }
+            return true;
+        }
+        if (args[0].equalsIgnoreCase("give")) {
+            if (args.length < 3) { sender.sendMessage(Component.text("Usage: /mythic give <player> <number|random>", NamedTextColor.YELLOW)); return true; }
+            Player target = Bukkit.getPlayer(args[1]);
+            if (target == null) { sender.sendMessage(Component.text("Player not found!", NamedTextColor.RED)); return true; }
+
+            ItemStack item;
+            if (args[2].equalsIgnoreCase("random")) {
+                item = mythicItemRegistry.getRandomMythicItem();
+            } else {
+                try {
+                    int index = Integer.parseInt(args[2]) - 1;
+                    List<ItemStack> items = mythicItemRegistry.getAllItems();
+                    if (index < 0 || index >= items.size()) {
+                        sender.sendMessage(Component.text("Invalid number! Use 1-" + items.size(), NamedTextColor.RED));
+                        return true;
+                    }
+                    item = items.get(index).clone();
+                } catch (NumberFormatException e) {
+                    sender.sendMessage(Component.text("Invalid number!", NamedTextColor.RED));
+                    return true;
+                }
+            }
+
+            HashMap<Integer, ItemStack> overflow = target.getInventory().addItem(item);
+            for (ItemStack leftover : overflow.values()) {
+                target.getWorld().dropItemNaturally(target.getLocation(), leftover);
+            }
+
+            Component itemName = item.getItemMeta().displayName();
+            if (itemName == null) itemName = Component.text(item.getType().name());
+            sender.sendMessage(Component.text("Gave ", NamedTextColor.GREEN).append(itemName)
+                    .append(Component.text(" to " + target.getName(), NamedTextColor.GREEN)));
+            return true;
+        }
+        sender.sendMessage(Component.text("Usage: /mythic <give|list>", NamedTextColor.YELLOW));
         return true;
     }
 

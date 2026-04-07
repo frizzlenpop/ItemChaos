@@ -1,6 +1,8 @@
 # Trade-Up Configuration
 enabled: true
 input-count: 5
+cost: 50              # Coin cost per trade-up (0 = free)
+cooldown-seconds: 30  # Cooldown between trade-ups per player (0 = no cooldown)
 
 # Tiers based on ItemValueRegistry coin values
 # Items with coin value <= max-value are in that tier

@@ -87,5 +87,216 @@ pinatas:
         amount: 32
         chance: 20
 
+  xp_bonanza:
+    name: "&a&lXP Bonanza"
+    entity-type: WITCH
+    health: 120
+    coin-scatter: 300
+    loot:
+      - material: EXPERIENCE_BOTTLE
+        amount: 32
+        chance: 40
+      - material: ENCHANTED_BOOK
+        amount: 3
+        chance: 25
+      - material: LAPIS_LAZULI
+        amount: 32
+        chance: 30
+      - material: BOOKSHELF
+        amount: 8
+        chance: 15
+
+  nether_hoard:
+    name: "&c&lNether Hoard"
+    entity-type: BLAZE
+    health: 180
+    coin-scatter: 600
+    loot:
+      - material: BLAZE_ROD
+        amount: 16
+        chance: 35
+      - material: NETHER_WART
+        amount: 16
+        chance: 25
+      - material: FIRE_CHARGE
+        amount: 32
+        chance: 30
+      - material: GLOWSTONE
+        amount: 16
+        chance: 20
+
+  ocean_treasure:
+    name: "&b&lOcean Treasure"
+    entity-type: DROWNED
+    health: 150
+    coin-scatter: 500
+    loot:
+      - material: TRIDENT
+        amount: 1
+        chance: 15
+      - material: HEART_OF_THE_SEA
+        amount: 1
+        chance: 10
+      - material: NAUTILUS_SHELL
+        amount: 4
+        chance: 30
+      - material: PRISMARINE_SHARD
+        amount: 16
+        chance: 35
+
+  armory:
+    name: "&7&lArmory"
+    entity-type: SKELETON
+    health: 200
+    coin-scatter: 700
+    loot:
+      - material: DIAMOND_CHESTPLATE
+        amount: 1
+        chance: 20
+      - material: DIAMOND_LEGGINGS
+        amount: 1
+        chance: 20
+      - material: DIAMOND_BOOTS
+        amount: 1
+        chance: 25
+      - material: BOW
+        amount: 1
+        chance: 30
+      - material: ARROW
+        amount: 64
+        chance: 40
+      - material: SHIELD
+        amount: 1
+        chance: 25
+
+  potion_lab:
+    name: "&d&lPotion Lab"
+    entity-type: WITCH
+    health: 100
+    coin-scatter: 400
+    loot:
+      - material: BREWING_STAND
+        amount: 1
+        chance: 30
+      - material: BLAZE_POWDER
+        amount: 16
+        chance: 35
+      - material: GLISTERING_MELON_SLICE
+        amount: 8
+        chance: 25
+      - material: GHAST_TEAR
+        amount: 4
+        chance: 15
+      - material: FERMENTED_SPIDER_EYE
+        amount: 8
+        chance: 20
+
+  redstone_vault:
+    name: "&4&lRedstone Vault"
+    entity-type: IRON_GOLEM
+    health: 250
+    coin-scatter: 600
+    loot:
+      - material: REDSTONE
+        amount: 64
+        chance: 40
+      - material: REPEATER
+        amount: 16
+        chance: 30
+      - material: PISTON
+        amount: 8
+        chance: 25
+      - material: OBSERVER
+        amount: 8
+        chance: 20
+      - material: DISPENSER
+        amount: 4
+        chance: 20
+
+  farmers_bounty:
+    name: "&2&lFarmer's Bounty"
+    entity-type: COW
+    health: 60
+    coin-scatter: 150
+    loot:
+      - material: WHEAT
+        amount: 64
+        chance: 35
+      - material: CARROT
+        amount: 32
+        chance: 30
+      - material: POTATO
+        amount: 32
+        chance: 30
+      - material: BONE_MEAL
+        amount: 32
+        chance: 25
+      - material: MELON_SLICE
+        amount: 32
+        chance: 25
+
+  dragons_stash:
+    name: "&5&lDragon's Stash"
+    entity-type: ENDERMAN
+    health: 300
+    coin-scatter: 1500
+    loot:
+      - material: NETHERITE_INGOT
+        amount: 2
+        chance: 15
+      - material: ELYTRA
+        amount: 1
+        chance: 10
+      - material: DRAGON_BREATH
+        amount: 8
+        chance: 25
+      - material: END_CRYSTAL
+        amount: 4
+        chance: 20
+      - material: DRAGON_HEAD
+        amount: 1
+        chance: 5
+
+  cookie_monster:
+    name: "&e&lCookie Monster"
+    entity-type: ZOMBIE
+    health: 80
+    coin-scatter: 100
+    loot:
+      - material: COOKIE
+        amount: 64
+        chance: 50
+      - material: CAKE
+        amount: 4
+        chance: 30
+      - material: PUMPKIN_PIE
+        amount: 16
+        chance: 25
+      - material: SWEET_BERRIES
+        amount: 32
+        chance: 25
+      - material: HONEY_BOTTLE
+        amount: 8
+        chance: 20
+
+  tnt_barrel:
+    name: "&c&lTNT Barrel"
+    entity-type: CREEPER
+    health: 100
+    coin-scatter: 400
+    loot:
+      - material: TNT
+        amount: 16
+        chance: 40
+      - material: FIRE_CHARGE
+        amount: 16
+        chance: 30
+      - material: GUNPOWDER
+        amount: 32
+        chance: 35
+      - material: FIREWORK_ROCKET
+        amount: 16
+        chance: 25
+
 # Named spawn points - set via /pinata setlocation <name>
 locations: {}

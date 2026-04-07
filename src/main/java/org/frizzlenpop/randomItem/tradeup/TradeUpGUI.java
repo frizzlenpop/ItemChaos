@@ -15,6 +15,7 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.frizzlenpop.randomItem.economy.CoinManager;
 import org.frizzlenpop.randomItem.economy.ItemValueRegistry;
 
 import java.util.*;
@@ -27,10 +28,13 @@ public class TradeUpGUI implements Listener {
     private static final int INFO_SLOT = 4;
 
     private final TradeUpConfig config;
+    private final CoinManager coinManager;
     private final Set<UUID> openGUIs = new HashSet<>();
+    private final Map<UUID, Long> cooldowns = new HashMap<>();
 
-    public TradeUpGUI(TradeUpConfig config) {
+    public TradeUpGUI(TradeUpConfig config, CoinManager coinManager) {
         this.config = config;
+        this.coinManager = coinManager;
     }
 
     public void openGUI(Player player) {
@@ -60,14 +64,23 @@ public class TradeUpGUI implements Listener {
         ItemMeta infoMeta = info.getItemMeta();
         infoMeta.displayName(Component.text("Trade-Up System", NamedTextColor.GOLD, TextDecoration.BOLD)
                 .decoration(TextDecoration.ITALIC, false));
-        infoMeta.lore(List.of(
-                Component.text("Place " + config.getInputCount() + " items below", NamedTextColor.GRAY)
-                        .decoration(TextDecoration.ITALIC, false),
-                Component.text("Click Confirm to trade up!", NamedTextColor.YELLOW)
-                        .decoration(TextDecoration.ITALIC, false),
-                Component.text("Get 1 item from a higher tier", NamedTextColor.GREEN)
-                        .decoration(TextDecoration.ITALIC, false)
-        ));
+        List<Component> infoLore = new ArrayList<>();
+        infoLore.add(Component.text("Place " + config.getInputCount() + " items below", NamedTextColor.GRAY)
+                .decoration(TextDecoration.ITALIC, false));
+        infoLore.add(Component.text("Click Confirm to trade up!", NamedTextColor.YELLOW)
+                .decoration(TextDecoration.ITALIC, false));
+        infoLore.add(Component.text("Get 1 item from a higher tier", NamedTextColor.GREEN)
+                .decoration(TextDecoration.ITALIC, false));
+        if (config.getCost() > 0) {
+            infoLore.add(Component.empty());
+            infoLore.add(Component.text("Cost: " + config.getCost() + " coins", NamedTextColor.GOLD)
+                    .decoration(TextDecoration.ITALIC, false));
+        }
+        if (config.getCooldownSeconds() > 0) {
+            infoLore.add(Component.text("Cooldown: " + config.getCooldownSeconds() + "s", NamedTextColor.GRAY)
+                    .decoration(TextDecoration.ITALIC, false));
+        }
+        infoMeta.lore(infoLore);
         info.setItemMeta(infoMeta);
         inv.setItem(INFO_SLOT, info);
 
@@ -151,6 +164,25 @@ public class TradeUpGUI implements Listener {
             return;
         }
 
+        // Cooldown check
+        if (config.getCooldownSeconds() > 0) {
+            long now = System.currentTimeMillis();
+            Long lastUse = cooldowns.get(player.getUniqueId());
+            if (lastUse != null && (now - lastUse) < config.getCooldownSeconds() * 1000L) {
+                int remaining = (int) ((config.getCooldownSeconds() * 1000L - (now - lastUse)) / 1000) + 1;
+                player.sendMessage(Component.text("Cooldown! Wait " + remaining + "s", NamedTextColor.RED));
+                return;
+            }
+        }
+
+        // Coin cost check
+        if (config.getCost() > 0) {
+            if (!coinManager.removeCoins(player.getUniqueId(), config.getCost())) {
+                player.sendMessage(Component.text("Not enough coins! Need " + config.getCost(), NamedTextColor.RED));
+                return;
+            }
+        }
+
         // Calculate average value
         int totalValue = 0;
         for (ItemStack item : inputItems) {
@@ -177,6 +209,11 @@ public class TradeUpGUI implements Listener {
         HashMap<Integer, ItemStack> overflow = player.getInventory().addItem(resultItem);
         for (ItemStack leftover : overflow.values()) {
             player.getWorld().dropItemNaturally(player.getLocation(), leftover);
+        }
+
+        // Set cooldown
+        if (config.getCooldownSeconds() > 0) {
+            cooldowns.put(player.getUniqueId(), System.currentTimeMillis());
         }
 
         player.sendMessage(Component.text("Trade-Up! " + currentTier.display() + " -> " + nextTier.display() + ": " + result.name(), NamedTextColor.GREEN));

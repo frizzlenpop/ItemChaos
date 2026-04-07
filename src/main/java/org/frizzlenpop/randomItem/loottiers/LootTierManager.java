@@ -66,12 +66,23 @@ public class LootTierManager implements Listener {
         tiers.sort(Comparator.comparingLong(LootTier::blocksRequired));
 
         // Pre-build filtered item pools for each tier
-        // Each pool includes all items from that tier AND all lower tiers
-        for (LootTier tier : tiers) {
+        // Each tier focuses on its own level of items, plus essential items
+        // (wood, ores, logs) from lower tiers are always kept
+        for (int tierIdx = 0; tierIdx < tiers.size(); tierIdx++) {
+            LootTier tier = tiers.get(tierIdx);
+            int tierMin = tierIdx > 0 ? tiers.get(tierIdx - 1).maxItemValue() + 1 : 0;
+            int tierMax = tier.maxItemValue();
+
             List<Material> pool = new ArrayList<>();
             for (Material mat : Material.values()) {
                 if (!mat.isItem() || mat.isAir()) continue;
-                if (ItemValueRegistry.getValue(mat) <= tier.maxItemValue()) {
+                int value = ItemValueRegistry.getValue(mat);
+
+                if (value >= tierMin && value <= tierMax) {
+                    // Item belongs to this tier — always include
+                    pool.add(mat);
+                } else if (value < tierMin && isEssentialItem(mat)) {
+                    // Item is from a lower tier but is essential (wood, ores, logs, food)
                     pool.add(mat);
                 }
             }
@@ -164,6 +175,23 @@ public class LootTierManager implements Listener {
 
     public void resetPlayer(UUID uuid) {
         blocksMined.remove(uuid);
+    }
+
+    // Essential items that persist across all tiers (survival staples)
+    private static final String[] ESSENTIAL_KEYWORDS = {
+            "LOG", "WOOD", "PLANK", "STICK", "COAL", "ORE",
+            "COBBLESTONE", "STONE", "DIRT", "CRAFTING_TABLE",
+            "FURNACE", "CHEST", "TORCH", "BREAD", "APPLE",
+            "COOKED", "RAW", "BEEF", "PORK", "CHICKEN", "MUTTON",
+            "WHEAT", "SEED", "CARROT", "POTATO"
+    };
+
+    private static boolean isEssentialItem(Material mat) {
+        String name = mat.name();
+        for (String keyword : ESSENTIAL_KEYWORDS) {
+            if (name.contains(keyword)) return true;
+        }
+        return false;
     }
 
     private LootTier getTierForCount(long count) {
