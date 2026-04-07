@@ -8,8 +8,10 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.block.Block;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.frizzlenpop.randomItem.economy.CoinManager;
 import org.frizzlenpop.randomItem.economy.ItemValueRegistry;
@@ -112,6 +114,24 @@ public class RandomDropListener implements Listener {
 
         coinManager.addCoins(uuid, totalCoins);
         player.sendActionBar(Component.text("+" + totalCoins + " coins", NamedTextColor.GOLD));
+    }
+
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent event) {
+        if (!plugin.isChaosEnabled()) return;
+
+        // Skip sabotage TNT (handled by SabotageManager)
+        if (event.getEntity().customName() != null &&
+                event.getEntity().customName().equals(Component.text("sabotage_entity"))) {
+            return;
+        }
+
+        for (Block block : event.blockList()) {
+            Material item = getRandomItem();
+            dropOrSpawn(item, block.getLocation());
+        }
+        // Clear the block list so normal drops don't happen, but blocks still get destroyed
+        event.setYield(0);
     }
 
     @EventHandler
