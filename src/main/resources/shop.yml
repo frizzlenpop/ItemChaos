@@ -1,0 +1,57 @@
+# RandomItem Shop Configuration
+# Each item needs: material, amount, cost
+# Optional: name (display name with & color codes)
+#
+# Material must be a valid Bukkit Material name (e.g., DIAMOND_SWORD, GOLDEN_APPLE)
+# Full list: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+
+items:
+  - material: DIAMOND_SWORD
+    name: "&bDiamond Sword"
+    amount: 1
+    cost: 500
+
+  - material: DIAMOND_PICKAXE
+    name: "&bDiamond Pickaxe"
+    amount: 1
+    cost: 500
+
+  - material: GOLDEN_APPLE
+    name: "&6Golden Apple"
+    amount: 4
+    cost: 200
+
+  - material: ENDER_PEARL
+    name: "&5Ender Pearls"
+    amount: 8
+    cost: 300
+
+  - material: IRON_INGOT
+    name: "&fIron Ingots"
+    amount: 32
+    cost: 150
+
+  - material: OAK_LOG
+    name: "&6Oak Logs"
+    amount: 64
+    cost: 50
+
+  - material: COOKED_BEEF
+    name: "&cSteak"
+    amount: 16
+    cost: 75
+
+  - material: EXPERIENCE_BOTTLE
+    name: "&aXP Bottles"
+    amount: 16
+    cost: 250
+
+  - material: SHIELD
+    name: "&fShield"
+    amount: 1
+    cost: 300
+
+  - material: ENCHANTED_GOLDEN_APPLE
+    name: "&dEnchanted Golden Apple"
+    amount: 1
+    cost: 2000

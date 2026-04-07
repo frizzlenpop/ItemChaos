@@ -1,0 +1,22 @@
+# Gambling Configuration
+enabled: true
+min-bet: 10
+max-bet: 5000
+cooldown-seconds: 10
+
+outcomes:
+  - type: WIN_2X
+    display: "&a2x Win!"
+    weight: 30
+  - type: WIN_3X
+    display: "&6&l3x JACKPOT!"
+    weight: 10
+  - type: LOSE
+    display: "&cYou lost it all!"
+    weight: 35
+  - type: RANDOM_ITEM
+    display: "&dRandom Rare Item!"
+    weight: 15
+  - type: SELF_SABOTAGE
+    display: "&4Self-Sabotage!"
+    weight: 10

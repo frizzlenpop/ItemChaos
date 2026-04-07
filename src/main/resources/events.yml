@@ -1,0 +1,35 @@
+# Random Events Configuration
+enabled: true
+min-interval-seconds: 120
+max-interval-seconds: 300
+
+events:
+  - name: "Double Coins"
+    description: "All coin earnings doubled!"
+    duration-seconds: 60
+    weight: 25
+    type: DOUBLE_COINS
+
+  - name: "Gravity Madness"
+    description: "Low gravity for everyone!"
+    duration-seconds: 45
+    weight: 20
+    type: GRAVITY_MADNESS
+
+  - name: "Legendary Minute"
+    description: "All drops are rare items!"
+    duration-seconds: 60
+    weight: 15
+    type: LEGENDARY_MINUTE
+
+  - name: "Freeze Tag"
+    description: "Everyone gets slowed!"
+    duration-seconds: 20
+    weight: 20
+    type: FREEZE_TAG
+
+  - name: "Coin Rain"
+    description: "Random coin bonuses rain down!"
+    duration-seconds: 30
+    weight: 20
+    type: COIN_RAIN

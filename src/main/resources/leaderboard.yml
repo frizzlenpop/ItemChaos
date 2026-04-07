@@ -1,0 +1,6 @@
+# Leaderboard Configuration
+enabled: true
+max-entries: 10
+update-interval-ticks: 100
+show-team-totals: true
+title: "&6&lCoin Leaderboard"

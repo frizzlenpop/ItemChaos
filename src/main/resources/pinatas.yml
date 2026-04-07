@@ -1,0 +1,91 @@
+# Loot Pinata Configuration
+# Each pinata: entity-type, health, coin-scatter, loot (with chance %)
+
+pinatas:
+  gold_rush:
+    name: "&6&lGold Rush"
+    entity-type: IRON_GOLEM
+    health: 150
+    coin-scatter: 500
+    loot:
+      - material: GOLD_INGOT
+        amount: 16
+        chance: 40
+      - material: DIAMOND
+        amount: 4
+        chance: 30
+      - material: EMERALD
+        amount: 8
+        chance: 20
+      - material: GOLD_BLOCK
+        amount: 4
+        chance: 10
+
+  food_feast:
+    name: "&a&lFood Feast"
+    entity-type: PIG
+    health: 80
+    coin-scatter: 200
+    loot:
+      - material: COOKED_BEEF
+        amount: 32
+        chance: 30
+      - material: GOLDEN_APPLE
+        amount: 8
+        chance: 25
+      - material: GOLDEN_CARROT
+        amount: 16
+        chance: 25
+      - material: ENCHANTED_GOLDEN_APPLE
+        amount: 2
+        chance: 10
+      - material: CAKE
+        amount: 4
+        chance: 10
+
+  war_chest:
+    name: "&c&lWar Chest"
+    entity-type: ZOMBIE
+    health: 200
+    coin-scatter: 800
+    loot:
+      - material: DIAMOND_SWORD
+        amount: 1
+        chance: 25
+      - material: DIAMOND_CHESTPLATE
+        amount: 1
+        chance: 20
+      - material: DIAMOND_HELMET
+        amount: 1
+        chance: 20
+      - material: SHIELD
+        amount: 2
+        chance: 20
+      - material: BOW
+        amount: 1
+        chance: 15
+
+  ender_haul:
+    name: "&5&lEnder Haul"
+    entity-type: ENDERMAN
+    health: 250
+    coin-scatter: 1200
+    loot:
+      - material: ENDER_PEARL
+        amount: 16
+        chance: 30
+      - material: ELYTRA
+        amount: 1
+        chance: 10
+      - material: END_CRYSTAL
+        amount: 4
+        chance: 20
+      - material: SHULKER_SHELL
+        amount: 4
+        chance: 20
+      - material: CHORUS_FRUIT
+        amount: 32
+        chance: 20
+
+# Named spawn points - set via /pinata setlocation <name>
+locations: {}

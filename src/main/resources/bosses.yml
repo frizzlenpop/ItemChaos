@@ -1,0 +1,106 @@
+# Boss Events Configuration
+# Each boss: entity-type, health, speed, damage, coin-reward, proximity-radius, loot
+# Optional: spawn-adds, add-entity-type, add-count, add-interval-seconds
+
+bosses:
+  wardens_wrath:
+    name: "&4&lThe Warden's Wrath"
+    entity-type: WARDEN
+    health: 500
+    speed: 0.15
+    damage: 20
+    coin-reward: 2000
+    proximity-radius: 50
+    loot:
+      - material: NETHERITE_INGOT
+        amount: 2
+      - material: DIAMOND_BLOCK
+        amount: 5
+      - material: TOTEM_OF_UNDYING
+        amount: 1
+      - material: EXPERIENCE_BOTTLE
+        amount: 32
+
+  blaze_king:
+    name: "&6&lBlaze King"
+    entity-type: BLAZE
+    health: 300
+    speed: 0.3
+    damage: 12
+    coin-reward: 1500
+    proximity-radius: 50
+    loot:
+      - material: BLAZE_ROD
+        amount: 16
+      - material: FIRE_CHARGE
+        amount: 32
+      - material: DIAMOND
+        amount: 8
+      - material: GOLDEN_APPLE
+        amount: 8
+
+  spider_queen:
+    name: "&2&lSpider Queen"
+    entity-type: CAVE_SPIDER
+    health: 200
+    speed: 0.35
+    damage: 8
+    coin-reward: 1000
+    proximity-radius: 50
+    spawn-adds: true
+    add-entity-type: SPIDER
+    add-count: 5
+    add-interval-seconds: 15
+    loot:
+      - material: STRING
+        amount: 32
+      - material: SPIDER_EYE
+        amount: 16
+      - material: DIAMOND_SWORD
+        amount: 1
+      - material: ENCHANTED_GOLDEN_APPLE
+        amount: 2
+
+  zombie_horde:
+    name: "&8&lZombie Horde Leader"
+    entity-type: ZOMBIE
+    health: 400
+    speed: 0.2
+    damage: 15
+    coin-reward: 1800
+    proximity-radius: 50
+    spawn-adds: true
+    add-entity-type: ZOMBIE
+    add-count: 8
+    add-interval-seconds: 10
+    loot:
+      - material: IRON_BLOCK
+        amount: 10
+      - material: DIAMOND
+        amount: 5
+      - material: GOLDEN_APPLE
+        amount: 6
+      - material: SHIELD
+        amount: 2
+
+  ender_guardian:
+    name: "&5&lEnder Guardian"
+    entity-type: ENDERMAN
+    health: 400
+    speed: 0.4
+    damage: 16
+    coin-reward: 2500
+    proximity-radius: 50
+    loot:
+      - material: ENDER_PEARL
+        amount: 16
+      - material: ELYTRA
+        amount: 1
+      - material: END_CRYSTAL
+        amount: 4
+      - material: DIAMOND_BLOCK
+        amount: 3
+
+# Anchor locations per team - set via /boss setanchor <team>
+# Format: teamname: {world: "world", x: 0, y: 64, z: 0}
+anchors: {}

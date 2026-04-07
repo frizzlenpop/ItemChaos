@@ -1,0 +1,4 @@
+# Bounty System Configuration
+enabled: true
+min-bounty: 50
+max-bounty: 10000

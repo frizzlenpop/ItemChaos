@@ -1,0 +1,22 @@
+# Trade-Up Configuration
+enabled: true
+input-count: 5
+
+# Tiers based on ItemValueRegistry coin values
+# Items with coin value <= max-value are in that tier
+tiers:
+  junk:
+    max-value: 1
+    display: "&7Junk"
+  common:
+    max-value: 3
+    display: "&fCommon"
+  uncommon:
+    max-value: 8
+    display: "&aUncommon"
+  rare:
+    max-value: 20
+    display: "&9Rare"
+  legendary:
+    max-value: 999
+    display: "&6Legendary"

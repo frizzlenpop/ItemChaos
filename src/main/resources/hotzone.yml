@@ -1,0 +1,21 @@
+# Hot Zone Configuration
+enabled: true
+zone-duration-seconds: 120
+coin-rate-per-second: 5
+zone-radius: 10
+broadcast-interval-seconds: 15
+
+# Set via /hotzone setcenter, or leave use-fixed-center false for random
+use-fixed-center: false
+center:
+  world: "world"
+  x: 0
+  y: 64
+  z: 0
+
+random-bounds:
+  world: "world"
+  min-x: -200
+  max-x: 200
+  min-z: -200
+  max-z: 200

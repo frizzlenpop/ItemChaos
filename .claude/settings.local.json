@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew build:*)",
+      "Read(//c/Users/frizz/.jdks//**)",
+      "Read(//c/Program Files/**)",
+      "Bash(JAVA_HOME=\"/c/Users/frizz/.jdks/ms-25.0.2\" ./gradlew build)",
+      "WebFetch(domain:repo.papermc.io)",
+      "Bash(grep -E \"\\\\.yml$\")"
+    ]
+  }
+}

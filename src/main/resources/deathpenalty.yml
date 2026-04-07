@@ -1,0 +1,6 @@
+# Death Penalty Configuration
+# When a player dies, a percentage of their coins scatter as gold nuggets
+enabled: true
+drop-percentage: 20
+scatter-radius: 3
+nugget-count: 5
