@@ -30,6 +30,11 @@ import java.util.stream.Collectors;
 public class LootTierManager implements Listener {
 
     private static final Type MAP_TYPE = new TypeToken<Map<String, Long>>() {}.getType();
+    private static final java.util.Set<Material> BLOCKED_MATERIALS = java.util.Set.of(
+            Material.DEBUG_STICK, Material.COMMAND_BLOCK, Material.COMMAND_BLOCK_MINECART,
+            Material.STRUCTURE_BLOCK, Material.JIGSAW, Material.BARRIER,
+            Material.LIGHT, Material.STRUCTURE_VOID
+    );
 
     private final RandomItem plugin;
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -75,7 +80,7 @@ public class LootTierManager implements Listener {
 
             List<Material> pool = new ArrayList<>();
             for (Material mat : Material.values()) {
-                if (!mat.isItem() || mat.isAir()) continue;
+                if (!mat.isItem() || mat.isAir() || BLOCKED_MATERIALS.contains(mat)) continue;
                 int value = ItemValueRegistry.getValue(mat);
 
                 if (value >= tierMin && value <= tierMax) {

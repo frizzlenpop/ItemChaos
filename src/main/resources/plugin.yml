@@ -76,6 +76,10 @@ commands:
     description: Manage mythic items (op only)
     usage: /mythic <give|list>
     permission: chaos.admin
+  vote:
+    description: Manage viewer voting system (op only)
+    usage: /vote <toggle|start|stop>
+    permission: chaos.admin
 
 permissions:
   chaos.admin:

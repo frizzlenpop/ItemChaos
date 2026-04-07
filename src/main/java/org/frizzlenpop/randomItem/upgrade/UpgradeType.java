@@ -22,7 +22,47 @@ public enum UpgradeType {
 
     HEALTH_BOOST("Health Boost", Material.GOLDEN_APPLE,
             new int[]{150, 350, 700},
-            new String[]{"+2 hearts", "+4 hearts", "+6 hearts"});
+            new String[]{"+2 hearts", "+4 hearts", "+6 hearts"}),
+
+    NIGHT_VISION("Night Vision", Material.ENDER_EYE,
+            new int[]{100, 250, 500},
+            new String[]{"Night Vision I", "Night Vision II", "Night Vision III"}),
+
+    FIRE_RESISTANCE("Fire Resistance", Material.MAGMA_CREAM,
+            new int[]{150, 350, 700},
+            new String[]{"30s fire res on hit", "60s fire res on hit", "Permanent fire res"}),
+
+    MYTHIC_HUNTER("Mythic Hunter", Material.DRAGON_HEAD,
+            new int[]{500, 1000, 2000},
+            new String[]{"+2% mythic chance", "+4% mythic chance", "+6% mythic chance"}),
+
+    XP_MAGNET("XP Magnet", Material.EXPERIENCE_BOTTLE,
+            new int[]{100, 300, 600},
+            new String[]{"+5 XP per break", "+10 XP per break", "+20 XP per break"}),
+
+    COIN_SHIELD("Coin Shield", Material.SHIELD,
+            new int[]{200, 500, 1000},
+            new String[]{"25% less coin loss", "50% less coin loss", "75% less coin loss"}),
+
+    BLAST_MINING("Blast Mining", Material.TNT,
+            new int[]{300, 700, 1500},
+            new String[]{"5% chain break", "10% chain break", "15% chain break"}),
+
+    AUTO_SMELT("Auto Smelt", Material.BLAST_FURNACE,
+            new int[]{200, 500, 1000},
+            new String[]{"15% smelt chance", "30% smelt chance", "50% smelt chance"}),
+
+    MAGNET("Magnet", Material.IRON_INGOT,
+            new int[]{150, 400, 800},
+            new String[]{"5 block radius", "10 block radius", "15 block radius"}),
+
+    SABOTAGE_SHIELD("Sabotage Shield", Material.TOTEM_OF_UNDYING,
+            new int[]{300, 600, 1200},
+            new String[]{"15% deflect chance", "30% deflect chance", "50% deflect chance"}),
+
+    MYTHIC_AURA("Mythic Aura", Material.BEACON,
+            new int[]{400, 800, 1500},
+            new String[]{"50 coins nearby (5 blocks)", "100 coins nearby (10 blocks)", "200 coins nearby (15 blocks)"});
 
     private final String displayName;
     private final Material icon;

@@ -20,6 +20,8 @@ import org.bukkit.util.Vector;
 import org.frizzlenpop.randomItem.RandomItem;
 import org.frizzlenpop.randomItem.economy.CoinManager;
 import org.frizzlenpop.randomItem.teams.TeamManager;
+import org.frizzlenpop.randomItem.upgrade.UpgradeManager;
+import org.frizzlenpop.randomItem.upgrade.UpgradeType;
 
 import java.time.Duration;
 import java.util.*;
@@ -32,12 +34,14 @@ public class SabotageManager implements Listener {
     private final RandomItem plugin;
     private final CoinManager coinManager;
     private final TeamManager teamManager;
+    private final UpgradeManager upgradeManager;
     private final Map<UUID, Set<BukkitTask>> activeTasks = new HashMap<>();
 
-    public SabotageManager(RandomItem plugin, CoinManager coinManager, TeamManager teamManager) {
+    public SabotageManager(RandomItem plugin, CoinManager coinManager, TeamManager teamManager, UpgradeManager upgradeManager) {
         this.plugin = plugin;
         this.coinManager = coinManager;
         this.teamManager = teamManager;
+        this.upgradeManager = upgradeManager;
     }
 
     public CoinManager getCoinManager() {
@@ -52,6 +56,23 @@ public class SabotageManager implements Listener {
         if (!coinManager.removeCoins(attacker.getUniqueId(), type.getCost())) {
             attacker.sendMessage(Component.text("Not enough coins! Need " + type.getCost(), NamedTextColor.RED));
             return false;
+        }
+
+        // Sabotage Shield — chance to deflect back at attacker
+        int shieldLevel = upgradeManager.getLevel(victim.getUniqueId(), UpgradeType.SABOTAGE_SHIELD);
+        if (shieldLevel > 0) {
+            double[] deflectChances = {0.15, 0.30, 0.50};
+            if (ThreadLocalRandom.current().nextDouble() < deflectChances[shieldLevel - 1]) {
+                applySabotage(attacker, type);
+                Bukkit.broadcast(Component.text("[Sabotage Shield] ", NamedTextColor.AQUA, TextDecoration.BOLD)
+                        .append(Component.text(victim.getName(), NamedTextColor.YELLOW))
+                        .append(Component.text(" deflected ", NamedTextColor.AQUA))
+                        .append(Component.text(type.getDisplayName(), NamedTextColor.RED, TextDecoration.BOLD))
+                        .append(Component.text(" back at ", NamedTextColor.AQUA))
+                        .append(Component.text(attacker.getName(), NamedTextColor.RED))
+                        .append(Component.text("!", NamedTextColor.AQUA)));
+                return true;
+            }
         }
 
         applySabotage(victim, type);

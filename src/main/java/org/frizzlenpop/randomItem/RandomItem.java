@@ -40,6 +40,7 @@ import org.frizzlenpop.randomItem.tradeup.TradeUpConfig;
 import org.frizzlenpop.randomItem.tradeup.TradeUpGUI;
 import org.frizzlenpop.randomItem.upgrade.UpgradeGUI;
 import org.frizzlenpop.randomItem.upgrade.UpgradeManager;
+import org.frizzlenpop.randomItem.voting.VotingManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -76,6 +77,7 @@ public final class RandomItem extends JavaPlugin {
     private BlockadexManager blockadexManager;
     private LootTierManager lootTierManager;
     private MythicItemRegistry mythicItemRegistry;
+    private VotingManager votingManager;
 
     @Override
     public void onEnable() {
@@ -89,7 +91,7 @@ public final class RandomItem extends JavaPlugin {
         upgradeGUI = new UpgradeGUI(upgradeManager, coinManager);
         shopConfig = new ShopConfig(this);
         shopGUI = new ShopGUI(shopConfig, coinManager);
-        sabotageManager = new SabotageManager(this, coinManager, teamManager);
+        sabotageManager = new SabotageManager(this, coinManager, teamManager, upgradeManager);
         sabotageGUI = new SabotageGUI(sabotageManager, coinManager, teamManager);
 
         // New systems
@@ -105,12 +107,15 @@ public final class RandomItem extends JavaPlugin {
         randomEventManager = new RandomEventManager(this, coinManager);
         tradeUpConfig = new TradeUpConfig(this);
         tradeUpGUI = new TradeUpGUI(tradeUpConfig, coinManager);
-        deathPenaltyManager = new DeathPenaltyManager(this, coinManager);
+        deathPenaltyManager = new DeathPenaltyManager(this, coinManager, upgradeManager);
         leaderboardManager = new LeaderboardManager(this, coinManager, teamManager);
         blockadexManager = new BlockadexManager(this);
         lootTierManager = new LootTierManager(this);
         mythicItemRegistry = new MythicItemRegistry(this);
         randomEventManager.setMythicItemRegistry(mythicItemRegistry);
+        votingManager = new VotingManager(this, coinManager, randomEventManager,
+                sabotageManager, bossManager, pinataManager);
+        votingManager.initialize();
 
         // Register all listeners
         PluginManager pm = getServer().getPluginManager();
@@ -142,6 +147,7 @@ public final class RandomItem extends JavaPlugin {
         if (bountyManager != null) bountyManager.save();
         if (blockadexManager != null) blockadexManager.save();
         if (lootTierManager != null) lootTierManager.save();
+        if (votingManager != null) votingManager.shutdown();
     }
 
     public boolean isChaosEnabled() {
@@ -172,6 +178,7 @@ public final class RandomItem extends JavaPlugin {
             case "blockadex" -> handleBlockadex(sender, args);
             case "loottiers" -> handleLootTiers(sender, args);
             case "mythic" -> handleMythic(sender, args);
+            case "vote" -> handleVote(sender, args);
             default -> false;
         };
     }
@@ -225,6 +232,7 @@ public final class RandomItem extends JavaPlugin {
         if (cmd.equals("deathpenalty") && args.length == 1) return filter(List.of("toggle"), args[0]);
         if (cmd.equals("leaderboard") && args.length == 1) return filter(List.of("toggle", "reset"), args[0]);
         if (cmd.equals("blockadex") && args.length == 1) return filter(List.of("top", "toggle"), args[0]);
+        if (cmd.equals("vote") && args.length == 1) return filter(List.of("toggle", "start", "stop"), args[0]);
         if (cmd.equals("mythic")) {
             if (args.length == 1) return filter(List.of("give", "list"), args[0]);
             if (args.length == 2 && args[0].equalsIgnoreCase("give")) return null; // player names
@@ -534,6 +542,27 @@ public final class RandomItem extends JavaPlugin {
     private boolean handleWinners(CommandSender sender) {
         if (!(sender instanceof Player player)) { sender.sendMessage("Must be a player."); return true; }
         leaderboardManager.showWinners(player);
+        return true;
+    }
+
+    private boolean handleVote(CommandSender sender, String[] args) {
+        if (args.length < 1) { sender.sendMessage(Component.text("Usage: /vote <toggle|start|stop>", NamedTextColor.YELLOW)); return true; }
+        if (!sender.hasPermission("chaos.admin")) { sender.sendMessage(Component.text("No permission.", NamedTextColor.RED)); return true; }
+        switch (args[0].toLowerCase()) {
+            case "toggle" -> {
+                votingManager.toggleEnabled();
+                sender.sendMessage(Component.text("Voting " + (votingManager.isEnabled() ? "enabled" : "disabled") + "!", NamedTextColor.GREEN));
+            }
+            case "start" -> {
+                votingManager.startRound();
+                sender.sendMessage(Component.text("Vote round started!", NamedTextColor.GREEN));
+            }
+            case "stop" -> {
+                votingManager.endRound();
+                sender.sendMessage(Component.text("Vote round stopped!", NamedTextColor.GREEN));
+            }
+            default -> sender.sendMessage(Component.text("Usage: /vote <toggle|start|stop>", NamedTextColor.YELLOW));
+        }
         return true;
     }
 

@@ -22,7 +22,11 @@ import java.util.UUID;
 public class UpgradeGUI implements Listener {
 
     private static final Component GUI_TITLE = Component.text("Upgrades", NamedTextColor.DARK_PURPLE, TextDecoration.BOLD);
-    private static final int[] UPGRADE_SLOTS = {11, 12, 13, 14, 15};
+    private static final int[] UPGRADE_SLOTS = {
+            11, 12, 13, 14, 15,   // Row 2: first 5 upgrades
+            20, 21, 22, 23, 24,   // Row 3: next 5 upgrades
+            29, 30, 31, 32, 33    // Row 4: last 5 upgrades
+    };
 
     private final UpgradeManager upgradeManager;
     private final CoinManager coinManager;
@@ -33,7 +37,7 @@ public class UpgradeGUI implements Listener {
     }
 
     public void openGUI(Player player) {
-        Inventory inv = Bukkit.createInventory(null, 27, GUI_TITLE);
+        Inventory inv = Bukkit.createInventory(null, 54, GUI_TITLE);
         UUID uuid = player.getUniqueId();
         long playerCoins = coinManager.getCoins(uuid);
 
@@ -42,7 +46,7 @@ public class UpgradeGUI implements Listener {
         ItemMeta fillerMeta = filler.getItemMeta();
         fillerMeta.displayName(Component.empty());
         filler.setItemMeta(fillerMeta);
-        for (int i = 0; i < 27; i++) {
+        for (int i = 0; i < 54; i++) {
             inv.setItem(i, filler);
         }
 

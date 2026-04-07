@@ -6,6 +6,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -27,6 +28,7 @@ import org.frizzlenpop.randomItem.upgrade.UpgradeType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -52,10 +54,16 @@ public class RandomDropListener implements Listener {
     // Ender Dragon and Wither eggs are excluded (always drop as eggs)
     private static final Map<Material, EntityType> SPAWN_EGG_MAP;
 
+    private static final Set<Material> BLOCKED_MATERIALS = Set.of(
+            Material.DEBUG_STICK, Material.COMMAND_BLOCK, Material.COMMAND_BLOCK_MINECART,
+            Material.STRUCTURE_BLOCK, Material.JIGSAW, Material.BARRIER,
+            Material.LIGHT, Material.STRUCTURE_VOID
+    );
+
     static {
         VALID_ITEMS = new ArrayList<>();
         for (Material mat : Material.values()) {
-            if (mat.isItem() && !mat.isAir()) {
+            if (mat.isItem() && !mat.isAir() && !BLOCKED_MATERIALS.contains(mat)) {
                 VALID_ITEMS.add(mat);
             }
         }
@@ -121,7 +129,7 @@ public class RandomDropListener implements Listener {
             totalCoins = 100; // Mythic items are always worth 100 coins
             announceMythicDrop(player, mythicDrop);
         } else {
-            Material item = rollItem(uuid);
+            Material item = applyAutoSmelt(uuid, rollItem(uuid));
             dropOrSpawn(item, dropLoc);
             blockadexManager.recordItem(uuid, item);
             totalCoins = ItemValueRegistry.getValue(item);
@@ -136,7 +144,7 @@ public class RandomDropListener implements Listener {
                 totalCoins += 100;
                 announceMythicDrop(player, bonusMythic);
             } else {
-                Material bonusItem = rollItem(uuid);
+                Material bonusItem = applyAutoSmelt(uuid, rollItem(uuid));
                 dropOrSpawn(bonusItem, dropLoc);
                 blockadexManager.recordItem(uuid, bonusItem);
                 totalCoins += ItemValueRegistry.getValue(bonusItem);
@@ -148,6 +156,42 @@ public class RandomDropListener implements Listener {
 
         coinManager.addCoins(uuid, totalCoins);
         player.sendActionBar(Component.text("+" + totalCoins + " coins", NamedTextColor.GOLD));
+
+        // XP Magnet upgrade
+        int xpLevel = upgradeManager.getLevel(uuid, UpgradeType.XP_MAGNET);
+        if (xpLevel > 0) {
+            int[] xpAmounts = {5, 10, 20};
+            player.giveExp(xpAmounts[xpLevel - 1]);
+        }
+
+        // Fire Resistance upgrade (levels 1-2: temporary on block break)
+        int fireResLevel = upgradeManager.getLevel(uuid, UpgradeType.FIRE_RESISTANCE);
+        if (fireResLevel > 0 && fireResLevel < 3) {
+            int durationTicks = fireResLevel == 1 ? 600 : 1200;
+            player.addPotionEffect(new org.bukkit.potion.PotionEffect(
+                    org.bukkit.potion.PotionEffectType.FIRE_RESISTANCE, durationTicks, 0, true, false, true));
+        }
+
+        // Blast Mining upgrade — chance to break adjacent blocks
+        int blastLevel = upgradeManager.getLevel(uuid, UpgradeType.BLAST_MINING);
+        if (blastLevel > 0 && ThreadLocalRandom.current().nextDouble() < blastLevel * 0.05) {
+            Block origin = event.getBlock();
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        if (dx == 0 && dy == 0 && dz == 0) continue;
+                        Block adj = origin.getRelative(dx, dy, dz);
+                        if (adj.getType().isAir()) continue;
+                        adj.setType(Material.AIR);
+                        Material bonusItem = rollItem(uuid);
+                        bonusItem = applyAutoSmelt(uuid, bonusItem);
+                        dropOrSpawn(bonusItem, adj.getLocation());
+                        blockadexManager.recordItem(uuid, bonusItem);
+                        coinManager.addCoins(uuid, applyMultiplier(uuid, ItemValueRegistry.getValue(bonusItem)));
+                    }
+                }
+            }
+        }
     }
 
     @EventHandler
@@ -291,6 +335,12 @@ public class RandomDropListener implements Listener {
 
         int chance = mythicItemRegistry.getDropChanceInLegendary();
 
+        // Mythic Hunter upgrade bonus
+        int mythicHunterLevel = upgradeManager.getLevel(uuid, UpgradeType.MYTHIC_HUNTER);
+        if (mythicHunterLevel > 0) {
+            chance += mythicHunterLevel * 2; // +2/+4/+6%
+        }
+
         // If loot tiers enabled, check if player is in the mythic tier
         if (lootTierManager.isEnabled()) {
             long blocksMined = lootTierManager.getBlocksMined(uuid);
@@ -319,5 +369,40 @@ public class RandomDropListener implements Listener {
                 .append(Component.text("!", NamedTextColor.LIGHT_PURPLE)));
 
         player.playSound(player.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1.2f);
+
+        // Mythic Aura upgrade — nearby players get bonus coins
+        int auraLevel = upgradeManager.getLevel(player.getUniqueId(), UpgradeType.MYTHIC_AURA);
+        if (auraLevel > 0) {
+            int[] radii = {5, 10, 15};
+            long[] bonusCoins = {50, 100, 200};
+            double radius = radii[auraLevel - 1];
+            for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
+                if (entity instanceof Player nearby && !nearby.equals(player)) {
+                    coinManager.addCoins(nearby.getUniqueId(), bonusCoins[auraLevel - 1]);
+                    nearby.sendActionBar(Component.text("+" + bonusCoins[auraLevel - 1] + " Mythic Aura coins!", NamedTextColor.LIGHT_PURPLE));
+                }
+            }
+        }
+    }
+
+    private static final Map<Material, Material> SMELT_MAP = Map.of(
+            Material.RAW_IRON, Material.IRON_INGOT,
+            Material.RAW_GOLD, Material.GOLD_INGOT,
+            Material.RAW_COPPER, Material.COPPER_INGOT,
+            Material.COBBLESTONE, Material.STONE,
+            Material.SAND, Material.GLASS,
+            Material.CLAY_BALL, Material.BRICK,
+            Material.WET_SPONGE, Material.SPONGE,
+            Material.CACTUS, Material.GREEN_DYE
+    );
+
+    private Material applyAutoSmelt(UUID uuid, Material original) {
+        int autoSmeltLevel = upgradeManager.getLevel(uuid, UpgradeType.AUTO_SMELT);
+        if (autoSmeltLevel <= 0) return original;
+        double[] chances = {0.15, 0.30, 0.50};
+        if (ThreadLocalRandom.current().nextDouble() < chances[autoSmeltLevel - 1]) {
+            return SMELT_MAP.getOrDefault(original, original);
+        }
+        return original;
     }
 }

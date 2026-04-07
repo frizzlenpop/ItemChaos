@@ -12,19 +12,23 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.frizzlenpop.randomItem.RandomItem;
 import org.frizzlenpop.randomItem.economy.CoinDropUtil;
 import org.frizzlenpop.randomItem.economy.CoinManager;
+import org.frizzlenpop.randomItem.upgrade.UpgradeManager;
+import org.frizzlenpop.randomItem.upgrade.UpgradeType;
 
 import java.io.File;
 
 public class DeathPenaltyManager implements Listener {
 
     private final CoinManager coinManager;
+    private final UpgradeManager upgradeManager;
     private boolean enabled;
     private int dropPercentage;
     private int scatterRadius;
     private int nuggetCount;
 
-    public DeathPenaltyManager(RandomItem plugin, CoinManager coinManager) {
+    public DeathPenaltyManager(RandomItem plugin, CoinManager coinManager, UpgradeManager upgradeManager) {
         this.coinManager = coinManager;
+        this.upgradeManager = upgradeManager;
 
         plugin.saveResource("deathpenalty.yml", false);
         YamlConfiguration config = YamlConfiguration.loadConfiguration(
@@ -53,6 +57,14 @@ public class DeathPenaltyManager implements Listener {
 
         long dropAmount = coins * dropPercentage / 100;
         if (dropAmount <= 0) return;
+
+        // Coin Shield upgrade reduces loss
+        int shieldLevel = upgradeManager.getLevel(victim.getUniqueId(), UpgradeType.COIN_SHIELD);
+        if (shieldLevel > 0) {
+            double[] reductions = {0.25, 0.50, 0.75};
+            dropAmount = (long) (dropAmount * (1.0 - reductions[shieldLevel - 1]));
+            if (dropAmount <= 0) return;
+        }
 
         coinManager.removeCoins(victim.getUniqueId(), dropAmount);
         CoinDropUtil.scatterCoins(victim.getLocation(), dropAmount, nuggetCount, scatterRadius);

@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -42,6 +44,9 @@ public class UpgradeManager implements Listener {
         load();
 
         plugin.getServer().getScheduler().runTaskTimer(plugin, this::save, 6000L, 6000L);
+
+        // Magnet upgrade tick — every 0.5 seconds, pull nearby items toward players
+        plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickMagnet, 20L, 10L);
     }
 
     public int getLevel(UUID uuid, UpgradeType type) {
@@ -66,7 +71,8 @@ public class UpgradeManager implements Listener {
 
         playerData.setLevel(type, currentLevel + 1);
 
-        if (type == UpgradeType.HASTE || type == UpgradeType.HEALTH_BOOST) {
+        if (type == UpgradeType.HASTE || type == UpgradeType.HEALTH_BOOST
+                || type == UpgradeType.NIGHT_VISION || type == UpgradeType.FIRE_RESISTANCE) {
             applyEffects(player);
         }
 
@@ -93,10 +99,37 @@ public class UpgradeManager implements Listener {
                     PotionEffectType.HEALTH_BOOST, Integer.MAX_VALUE, HEALTH_AMPLIFIERS[healthLevel - 1],
                     true, false, true));
         }
+
+        int nightVisionLevel = playerData.getLevel(UpgradeType.NIGHT_VISION);
+        if (nightVisionLevel > 0) {
+            player.addPotionEffect(new PotionEffect(
+                    PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0,
+                    true, false, true));
+        }
+
+        int fireResLevel = playerData.getLevel(UpgradeType.FIRE_RESISTANCE);
+        if (fireResLevel == 3) {
+            player.addPotionEffect(new PotionEffect(
+                    PotionEffectType.FIRE_RESISTANCE, Integer.MAX_VALUE, 0,
+                    true, false, true));
+        }
     }
 
-    private PlayerUpgradeData getPlayerData(UUID uuid) {
+    public PlayerUpgradeData getPlayerData(UUID uuid) {
         return data.computeIfAbsent(uuid, k -> new PlayerUpgradeData());
+    }
+
+    private void tickMagnet() {
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            int magnetLevel = getLevel(player.getUniqueId(), UpgradeType.MAGNET);
+            if (magnetLevel <= 0) continue;
+            double radius = magnetLevel * 5.0;
+            for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
+                if (entity instanceof Item item) {
+                    item.teleport(player.getLocation());
+                }
+            }
+        }
     }
 
     @EventHandler

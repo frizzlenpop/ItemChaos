@@ -1,0 +1,53 @@
+# Viewer Voting System Configuration
+# Hosts a web page where viewers can vote on in-game changes
+# Viewers visit http://your-server-ip:port to vote
+
+enabled: true
+port: 8080
+vote-duration-seconds: 60
+vote-interval-seconds: 300
+options-per-round: 4
+
+# Available vote options (random selection each round)
+# Types: TRIGGER_EVENT, GLOBAL_SABOTAGE, SABOTAGE_PLAYER, GIVE_COINS, TAKE_COINS,
+#        SPAWN_BOSS, SPAWN_PINATA, DOUBLE_COINS_BOOST
+options:
+  - type: TRIGGER_EVENT
+    target: "Double Coins"
+    description: "Trigger Double Coins for 60s!"
+  - type: TRIGGER_EVENT
+    target: "Legendary Minute"
+    description: "Legendary Minute - rare drops only!"
+  - type: TRIGGER_EVENT
+    target: "Gravity Madness"
+    description: "Low gravity for everyone!"
+  - type: TRIGGER_EVENT
+    target: "Darkness Falls"
+    description: "Plunge everyone into darkness!"
+  - type: TRIGGER_EVENT
+    target: "Speed Demons"
+    description: "Speed boost for everyone!"
+  - type: GLOBAL_SABOTAGE
+    target: ""
+    description: "Random sabotage on ALL players!"
+  - type: SABOTAGE_PLAYER
+    target: ""
+    description: "Sabotage a random player!"
+  - type: GIVE_COINS
+    target: "100"
+    description: "Give all players 100 coins!"
+  - type: GIVE_COINS
+    target: "500"
+    description: "Give all players 500 coins!"
+  - type: TAKE_COINS
+    target: "10"
+    description: "Tax everyone 10% of their coins!"
+  - type: SPAWN_BOSS
+    target: ""
+    description: "Spawn a boss at a random player!"
+  - type: SPAWN_PINATA
+    target: ""
+    description: "Spawn a loot pinata!"
+  - type: DOUBLE_COINS_BOOST
+    target: "60"
+    description: "Double coins for 60 seconds!"
