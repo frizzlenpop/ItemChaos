@@ -37,11 +37,14 @@ public class SabotageManager implements Listener {
     private final UpgradeManager upgradeManager;
     private final Map<UUID, Set<BukkitTask>> activeTasks = new HashMap<>();
 
-    public SabotageManager(RandomItem plugin, CoinManager coinManager, TeamManager teamManager, UpgradeManager upgradeManager) {
+    private final SabotageConfig sabotageConfig;
+
+    public SabotageManager(RandomItem plugin, CoinManager coinManager, TeamManager teamManager, UpgradeManager upgradeManager, SabotageConfig sabotageConfig) {
         this.plugin = plugin;
         this.coinManager = coinManager;
         this.teamManager = teamManager;
         this.upgradeManager = upgradeManager;
+        this.sabotageConfig = sabotageConfig;
     }
 
     public CoinManager getCoinManager() {
@@ -52,26 +55,33 @@ public class SabotageManager implements Listener {
         return teamManager;
     }
 
+    public SabotageConfig getSabotageConfig() {
+        return sabotageConfig;
+    }
+
     public boolean executeSabotage(Player attacker, Player victim, SabotageType type) {
-        if (!coinManager.removeCoins(attacker.getUniqueId(), type.getCost())) {
-            attacker.sendMessage(Component.text("Not enough coins! Need " + type.getCost(), NamedTextColor.RED));
+        int cost = sabotageConfig.getCost(type);
+        if (!coinManager.removeCoins(attacker.getUniqueId(), cost)) {
+            attacker.sendMessage(Component.text("Not enough coins! Need " + cost, NamedTextColor.RED));
             return false;
         }
 
         // Sabotage Shield — chance to deflect back at attacker
-        int shieldLevel = upgradeManager.getLevel(victim.getUniqueId(), UpgradeType.SABOTAGE_SHIELD);
-        if (shieldLevel > 0) {
-            double[] deflectChances = {0.15, 0.30, 0.50};
-            if (ThreadLocalRandom.current().nextDouble() < deflectChances[shieldLevel - 1]) {
-                applySabotage(attacker, type);
-                Bukkit.broadcast(Component.text("[Sabotage Shield] ", NamedTextColor.AQUA, TextDecoration.BOLD)
-                        .append(Component.text(victim.getName(), NamedTextColor.YELLOW))
-                        .append(Component.text(" deflected ", NamedTextColor.AQUA))
-                        .append(Component.text(type.getDisplayName(), NamedTextColor.RED, TextDecoration.BOLD))
-                        .append(Component.text(" back at ", NamedTextColor.AQUA))
-                        .append(Component.text(attacker.getName(), NamedTextColor.RED))
-                        .append(Component.text("!", NamedTextColor.AQUA)));
-                return true;
+        if (sabotageConfig.isShieldDeflectionEnabled()) {
+            int shieldLevel = upgradeManager.getLevel(victim.getUniqueId(), UpgradeType.SABOTAGE_SHIELD);
+            if (shieldLevel > 0) {
+                double[] deflectChances = sabotageConfig.getShieldDeflectChances();
+                if (ThreadLocalRandom.current().nextDouble() < deflectChances[shieldLevel - 1]) {
+                    applySabotage(attacker, type);
+                    Bukkit.broadcast(Component.text("[Sabotage Shield] ", NamedTextColor.AQUA, TextDecoration.BOLD)
+                            .append(Component.text(victim.getName(), NamedTextColor.YELLOW))
+                            .append(Component.text(" deflected ", NamedTextColor.AQUA))
+                            .append(Component.text(type.getDisplayName(), NamedTextColor.RED, TextDecoration.BOLD))
+                            .append(Component.text(" back at ", NamedTextColor.AQUA))
+                            .append(Component.text(attacker.getName(), NamedTextColor.RED))
+                            .append(Component.text("!", NamedTextColor.AQUA)));
+                    return true;
+                }
             }
         }
 
@@ -95,10 +105,11 @@ public class SabotageManager implements Listener {
             return false;
         }
 
-        long totalCost = (long) type.getCost() * members.size();
+        int unitCost = sabotageConfig.getCost(type);
+        long totalCost = (long) unitCost * members.size();
         if (!coinManager.removeCoins(attacker.getUniqueId(), totalCost)) {
             attacker.sendMessage(Component.text("Not enough coins! Need " + totalCost +
-                    " (" + type.getCost() + " x " + members.size() + " members)", NamedTextColor.RED));
+                    " (" + unitCost + " x " + members.size() + " members)", NamedTextColor.RED));
             return false;
         }
 
@@ -118,8 +129,14 @@ public class SabotageManager implements Listener {
     }
 
     public void applyRandomSabotage(Player victim) {
-        SabotageType[] types = SabotageType.values();
-        applySabotage(victim, types[ThreadLocalRandom.current().nextInt(types.length)]);
+        List<SabotageType> enabledTypes = new ArrayList<>();
+        for (SabotageType type : SabotageType.values()) {
+            if (sabotageConfig.isTypeEnabled(type)) {
+                enabledTypes.add(type);
+            }
+        }
+        if (enabledTypes.isEmpty()) return;
+        applySabotage(victim, enabledTypes.get(ThreadLocalRandom.current().nextInt(enabledTypes.size())));
     }
 
     public void applySabotage(Player victim, SabotageType type) {

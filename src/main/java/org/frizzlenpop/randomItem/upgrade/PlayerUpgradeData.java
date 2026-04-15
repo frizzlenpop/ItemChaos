@@ -24,7 +24,7 @@ public class PlayerUpgradeData {
     }
 
     public boolean isMaxed(UpgradeType type) {
-        return getLevel(type) >= type.getMaxLevel();
+        return getLevel(type) >= type.getDefaultMaxLevel();
     }
 
     public Map<String, Integer> toMap() {

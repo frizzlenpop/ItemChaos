@@ -86,12 +86,16 @@ public enum UpgradeType {
         return icon;
     }
 
-    public int getMaxLevel() {
+    public int getDefaultMaxLevel() {
         return maxLevel;
     }
 
-    public int getCost(int level) {
+    public int getDefaultCost(int level) {
         return costs[level];
+    }
+
+    public int[] getDefaultCosts() {
+        return costs.clone();
     }
 
     public String getDescription(int level) {

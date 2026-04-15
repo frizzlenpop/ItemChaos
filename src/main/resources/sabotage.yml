@@ -1,0 +1,91 @@
+# ==============================================
+# Sabotage System Configuration
+# ==============================================
+
+# Global settings
+enabled: true
+# Whether to broadcast sabotage events to all players
+broadcast-sabotages: true
+# Whether sabotage shield deflection is enabled
+shield-deflection-enabled: true
+# Deflection chances per shield level (level 1, 2, 3)
+shield-deflect-chances:
+  - 0.15
+  - 0.30
+  - 0.50
+
+# Per-sabotage configuration
+# Each sabotage can have: cost, duration (seconds), enabled
+sabotages:
+  INVENTORY_SHUFFLE:
+    cost: 300
+    duration: 0
+    enabled: true
+  BUTTER_FINGERS:
+    cost: 500
+    duration: 45
+    enabled: true
+  DRUNK_VISION:
+    cost: 250
+    duration: 60
+    enabled: true
+  GRAVITY_FLIP:
+    cost: 400
+    duration: 30
+    enabled: true
+  TNT_RAIN:
+    cost: 800
+    duration: 30
+    enabled: true
+  CHICKEN_SWARM:
+    cost: 350
+    duration: 45
+    enabled: true
+  PHANTOM_MENACE:
+    cost: 600
+    duration: 60
+    enabled: true
+  FAKE_DEATH:
+    cost: 200
+    duration: 0
+    enabled: true
+  HOT_POTATO:
+    cost: 300
+    duration: 30
+    enabled: true
+  ANVIL_RAIN:
+    cost: 600
+    duration: 30
+    enabled: true
+  COBWEB_TRAP:
+    cost: 250
+    duration: 20
+    enabled: true
+  LIGHTNING_STRIKE:
+    cost: 450
+    duration: 30
+    enabled: true
+  MOB_MAGNET:
+    cost: 500
+    duration: 45
+    enabled: true
+  NO_JUMP:
+    cost: 200
+    duration: 30
+    enabled: true
+  REVERSE_CONTROLS:
+    cost: 350
+    duration: 20
+    enabled: true
+  PIG_ARMY:
+    cost: 400
+    duration: 45
+    enabled: true
+  GLASS_CANNON:
+    cost: 300
+    duration: 45
+    enabled: true
+  BEES:
+    cost: 350
+    duration: 30
+    enabled: true

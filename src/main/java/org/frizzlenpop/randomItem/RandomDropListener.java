@@ -94,10 +94,12 @@ public class RandomDropListener implements Listener {
     private final BlockadexManager blockadexManager;
     private final LootTierManager lootTierManager;
     private final MythicItemRegistry mythicItemRegistry;
+    private final MainConfig mainConfig;
 
     public RandomDropListener(RandomItem plugin, CoinManager coinManager, UpgradeManager upgradeManager,
                               RandomEventManager randomEventManager, BlockadexManager blockadexManager,
-                              LootTierManager lootTierManager, MythicItemRegistry mythicItemRegistry) {
+                              LootTierManager lootTierManager, MythicItemRegistry mythicItemRegistry,
+                              MainConfig mainConfig) {
         this.plugin = plugin;
         this.coinManager = coinManager;
         this.upgradeManager = upgradeManager;
@@ -105,11 +107,24 @@ public class RandomDropListener implements Listener {
         this.blockadexManager = blockadexManager;
         this.lootTierManager = lootTierManager;
         this.mythicItemRegistry = mythicItemRegistry;
+        this.mainConfig = mainConfig;
+    }
+
+    /**
+     * Checks if a block is "instant-break" (hardness <= 0), e.g. leaves, grass, flowers, crops.
+     */
+    private boolean isInstantBreak(Block block) {
+        return block.getType().getHardness() <= 0;
     }
 
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         if (!plugin.isChaosEnabled()) return;
+
+        // Skip instant-break blocks (leaves, grass, flowers, etc.) if disabled
+        if (!mainConfig.isAllowInstantBreakDrops() && isInstantBreak(event.getBlock())) {
+            return; // Let vanilla handle the drop normally
+        }
 
         event.setDropItems(false);
 
@@ -276,12 +291,29 @@ public class RandomDropListener implements Listener {
      * has a 30% chance to spawn the mob instead.
      */
     private void dropOrSpawn(Material item, Location location) {
+        // Don't drop banned items — re-roll
+        if (mainConfig.isItemBanned(item)) {
+            item = getSafeRandomItem(null);
+        }
+
         EntityType spawnType = SPAWN_EGG_MAP.get(item);
-        if (spawnType != null && ThreadLocalRandom.current().nextDouble() < 0.30) {
+        if (spawnType != null && !mainConfig.isMobSpawnBanned(spawnType)
+                && ThreadLocalRandom.current().nextDouble() < 0.30) {
             location.getWorld().spawnEntity(location.clone().add(0.5, 0.5, 0.5), spawnType);
         } else {
             location.getWorld().dropItemNaturally(location, new ItemStack(item));
         }
+    }
+
+    /**
+     * Returns a random item that is not banned. Falls back to COBBLESTONE if stuck.
+     */
+    private Material getSafeRandomItem(UUID uuid) {
+        for (int i = 0; i < 10; i++) {
+            Material mat = getRandomItem(uuid);
+            if (!mainConfig.isItemBanned(mat)) return mat;
+        }
+        return Material.COBBLESTONE;
     }
 
     private Material rollItem(UUID uuid) {

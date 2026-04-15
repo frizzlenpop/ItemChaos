@@ -30,10 +30,12 @@ public class UpgradeGUI implements Listener {
 
     private final UpgradeManager upgradeManager;
     private final CoinManager coinManager;
+    private final UpgradeConfig upgradeConfig;
 
-    public UpgradeGUI(UpgradeManager upgradeManager, CoinManager coinManager) {
+    public UpgradeGUI(UpgradeManager upgradeManager, CoinManager coinManager, UpgradeConfig upgradeConfig) {
         this.upgradeManager = upgradeManager;
         this.coinManager = coinManager;
+        this.upgradeConfig = upgradeConfig;
     }
 
     public void openGUI(Player player) {
@@ -50,10 +52,13 @@ public class UpgradeGUI implements Listener {
             inv.setItem(i, filler);
         }
 
-        // Place upgrade icons
-        UpgradeType[] types = UpgradeType.values();
-        for (int i = 0; i < types.length; i++) {
-            inv.setItem(UPGRADE_SLOTS[i], buildUpgradeItem(types[i], uuid, playerCoins));
+        // Place upgrade icons (only enabled types)
+        int slotIndex = 0;
+        for (UpgradeType type : UpgradeType.values()) {
+            if (slotIndex >= UPGRADE_SLOTS.length) break;
+            if (!upgradeConfig.isTypeEnabled(type)) continue;
+            inv.setItem(UPGRADE_SLOTS[slotIndex], buildUpgradeItem(type, uuid, playerCoins));
+            slotIndex++;
         }
 
         player.openInventory(inv);
@@ -61,7 +66,8 @@ public class UpgradeGUI implements Listener {
 
     private ItemStack buildUpgradeItem(UpgradeType type, UUID uuid, long playerCoins) {
         int currentLevel = upgradeManager.getLevel(uuid, type);
-        boolean maxed = currentLevel >= type.getMaxLevel();
+        int maxLevel = upgradeConfig.getMaxLevel(type);
+        boolean maxed = currentLevel >= maxLevel;
 
         ItemStack item = new ItemStack(type.getIcon(), Math.max(1, currentLevel));
         ItemMeta meta = item.getItemMeta();
@@ -71,7 +77,7 @@ public class UpgradeGUI implements Listener {
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("Level " + currentLevel + "/" + type.getMaxLevel(),
+        lore.add(Component.text("Level " + currentLevel + "/" + maxLevel,
                         maxed ? NamedTextColor.GREEN : NamedTextColor.YELLOW)
                 .decoration(TextDecoration.ITALIC, false));
         lore.add(Component.empty());
@@ -86,7 +92,7 @@ public class UpgradeGUI implements Listener {
             lore.add(Component.text("MAXED", NamedTextColor.GOLD, TextDecoration.BOLD)
                     .decoration(TextDecoration.ITALIC, false));
         } else {
-            int cost = type.getCost(currentLevel);
+            int cost = upgradeConfig.getCost(type, currentLevel);
             lore.add(Component.text("Next: " + type.getDescription(currentLevel), NamedTextColor.AQUA)
                     .decoration(TextDecoration.ITALIC, false));
             NamedTextColor costColor = playerCoins >= cost ? NamedTextColor.GREEN : NamedTextColor.RED;
@@ -126,9 +132,12 @@ public class UpgradeGUI implements Listener {
     }
 
     private UpgradeType getUpgradeForSlot(int slot) {
-        UpgradeType[] types = UpgradeType.values();
-        for (int i = 0; i < UPGRADE_SLOTS.length; i++) {
-            if (UPGRADE_SLOTS[i] == slot) return types[i];
+        int slotIndex = 0;
+        for (UpgradeType type : UpgradeType.values()) {
+            if (slotIndex >= UPGRADE_SLOTS.length) break;
+            if (!upgradeConfig.isTypeEnabled(type)) continue;
+            if (UPGRADE_SLOTS[slotIndex] == slot) return type;
+            slotIndex++;
         }
         return null;
     }

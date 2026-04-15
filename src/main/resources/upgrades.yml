@@ -1,0 +1,98 @@
+# ==============================================
+# Upgrade System Configuration
+# ==============================================
+
+# Per-upgrade configuration
+# Each upgrade has costs per level (array index = level being purchased)
+# Level 1 cost, Level 2 cost, Level 3 cost
+upgrades:
+  DOUBLE_DROP:
+    costs:
+      - 100
+      - 300
+      - 600
+    enabled: true
+  LUCKY_DROPS:
+    costs:
+      - 150
+      - 400
+      - 800
+    enabled: true
+  COIN_MULTIPLIER:
+    costs:
+      - 200
+      - 500
+      - 1000
+    enabled: true
+  HASTE:
+    costs:
+      - 100
+      - 250
+      - 500
+    enabled: true
+  HEALTH_BOOST:
+    costs:
+      - 150
+      - 350
+      - 700
+    enabled: true
+  NIGHT_VISION:
+    costs:
+      - 100
+      - 250
+      - 500
+    enabled: true
+  FIRE_RESISTANCE:
+    costs:
+      - 150
+      - 350
+      - 700
+    enabled: true
+  MYTHIC_HUNTER:
+    costs:
+      - 500
+      - 1000
+      - 2000
+    enabled: true
+  XP_MAGNET:
+    costs:
+      - 100
+      - 300
+      - 600
+    enabled: true
+  COIN_SHIELD:
+    costs:
+      - 200
+      - 500
+      - 1000
+    enabled: true
+  BLAST_MINING:
+    costs:
+      - 300
+      - 700
+      - 1500
+    enabled: true
+  AUTO_SMELT:
+    costs:
+      - 200
+      - 500
+      - 1000
+    enabled: true
+  MAGNET:
+    costs:
+      - 150
+      - 400
+      - 800
+    enabled: true
+  SABOTAGE_SHIELD:
+    costs:
+      - 300
+      - 600
+      - 1200
+    enabled: true
+  MYTHIC_AURA:
+    costs:
+      - 400
+      - 800
+      - 1500
+    enabled: true

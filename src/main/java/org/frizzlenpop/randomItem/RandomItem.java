@@ -30,6 +30,7 @@ import org.frizzlenpop.randomItem.loottiers.LootTierManager;
 import org.frizzlenpop.randomItem.mythic.MythicItemRegistry;
 import org.frizzlenpop.randomItem.pinata.PinataConfig;
 import org.frizzlenpop.randomItem.pinata.PinataManager;
+import org.frizzlenpop.randomItem.sabotage.SabotageConfig;
 import org.frizzlenpop.randomItem.sabotage.SabotageGUI;
 import org.frizzlenpop.randomItem.sabotage.SabotageManager;
 import org.frizzlenpop.randomItem.shop.ShopConfig;
@@ -38,6 +39,7 @@ import org.frizzlenpop.randomItem.teams.Team;
 import org.frizzlenpop.randomItem.teams.TeamManager;
 import org.frizzlenpop.randomItem.tradeup.TradeUpConfig;
 import org.frizzlenpop.randomItem.tradeup.TradeUpGUI;
+import org.frizzlenpop.randomItem.upgrade.UpgradeConfig;
 import org.frizzlenpop.randomItem.upgrade.UpgradeGUI;
 import org.frizzlenpop.randomItem.upgrade.UpgradeManager;
 import org.frizzlenpop.randomItem.voting.VotingManager;
@@ -81,18 +83,26 @@ public final class RandomItem extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        // Main config
+        MainConfig mainConfig = new MainConfig(this);
+        mainConfig.load();
+
         // Foundation
         CoinDropUtil.initKey(this);
         coinManager = new CoinManager(this);
-        upgradeManager = new UpgradeManager(this, coinManager);
+        UpgradeConfig upgradeConfig = new UpgradeConfig(this);
+        upgradeConfig.load();
+        upgradeManager = new UpgradeManager(this, coinManager, upgradeConfig);
         teamManager = new TeamManager(this);
 
         // Existing systems
-        upgradeGUI = new UpgradeGUI(upgradeManager, coinManager);
+        upgradeGUI = new UpgradeGUI(upgradeManager, coinManager, upgradeConfig);
         shopConfig = new ShopConfig(this);
         shopGUI = new ShopGUI(shopConfig, coinManager);
-        sabotageManager = new SabotageManager(this, coinManager, teamManager, upgradeManager);
-        sabotageGUI = new SabotageGUI(sabotageManager, coinManager, teamManager);
+        SabotageConfig sabotageConfig = new SabotageConfig(this);
+        sabotageConfig.load();
+        sabotageManager = new SabotageManager(this, coinManager, teamManager, upgradeManager, sabotageConfig);
+        sabotageGUI = new SabotageGUI(sabotageManager, coinManager, teamManager, sabotageConfig);
 
         // New systems
         bossConfig = new BossConfig(this);
@@ -119,7 +129,7 @@ public final class RandomItem extends JavaPlugin {
 
         // Register all listeners
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvents(new RandomDropListener(this, coinManager, upgradeManager, randomEventManager, blockadexManager, lootTierManager, mythicItemRegistry), this);
+        pm.registerEvents(new RandomDropListener(this, coinManager, upgradeManager, randomEventManager, blockadexManager, lootTierManager, mythicItemRegistry, mainConfig), this);
         pm.registerEvents(upgradeManager, this);
         pm.registerEvents(upgradeGUI, this);
         pm.registerEvents(shopGUI, this);

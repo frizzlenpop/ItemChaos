@@ -39,6 +39,7 @@ public class SabotageGUI implements Listener {
     private final SabotageManager sabotageManager;
     private final CoinManager coinManager;
     private final TeamManager teamManager;
+    private final SabotageConfig sabotageConfig;
 
     // Target selection state: UUID of attacker -> target (UUID for player, String for team name)
     private final Map<UUID, Object> selectedTargets = new HashMap<>();
@@ -47,13 +48,18 @@ public class SabotageGUI implements Listener {
     // Map team slots to team names
     private final Map<UUID, Map<Integer, String>> teamSlotMap = new HashMap<>();
 
-    public SabotageGUI(SabotageManager sabotageManager, CoinManager coinManager, TeamManager teamManager) {
+    public SabotageGUI(SabotageManager sabotageManager, CoinManager coinManager, TeamManager teamManager, SabotageConfig sabotageConfig) {
         this.sabotageManager = sabotageManager;
         this.coinManager = coinManager;
         this.teamManager = teamManager;
+        this.sabotageConfig = sabotageConfig;
     }
 
     public void openTargetGUI(Player attacker) {
+        if (!sabotageConfig.isEnabled()) {
+            attacker.sendMessage(Component.text("Sabotage is currently disabled!", NamedTextColor.RED));
+            return;
+        }
         Inventory inv = Bukkit.createInventory(null, 54, TITLE_TARGET);
 
         // Fill with glass
@@ -143,9 +149,14 @@ public class SabotageGUI implements Listener {
         }
 
         SabotageType[] types = SabotageType.values();
-        for (int i = 0; i < types.length && i < TYPE_SLOTS.length; i++) {
-            SabotageType type = types[i];
-            long totalCost = (long) type.getCost() * costMultiplier;
+        int slotIndex = 0;
+        for (SabotageType type : types) {
+            if (slotIndex >= TYPE_SLOTS.length) break;
+            if (!sabotageConfig.isTypeEnabled(type)) continue;
+
+            int unitCost = sabotageConfig.getCost(type);
+            long totalCost = (long) unitCost * costMultiplier;
+            int duration = sabotageConfig.getDuration(type);
 
             ItemStack icon = new ItemStack(type.getIcon());
             ItemMeta meta = icon.getItemMeta();
@@ -157,8 +168,8 @@ public class SabotageGUI implements Listener {
                     .decoration(TextDecoration.ITALIC, false));
             lore.add(Component.empty());
 
-            if (type.getDurationSeconds() > 0) {
-                lore.add(Component.text("Duration: " + type.getDurationSeconds() + "s", NamedTextColor.YELLOW)
+            if (duration > 0) {
+                lore.add(Component.text("Duration: " + duration + "s", NamedTextColor.YELLOW)
                         .decoration(TextDecoration.ITALIC, false));
             } else {
                 lore.add(Component.text("Duration: Instant", NamedTextColor.YELLOW)
@@ -167,7 +178,7 @@ public class SabotageGUI implements Listener {
 
             NamedTextColor costColor = playerCoins >= totalCost ? NamedTextColor.GREEN : NamedTextColor.RED;
             String costText = costMultiplier > 1
-                    ? "Cost: " + totalCost + " coins (" + type.getCost() + " x " + costMultiplier + ")"
+                    ? "Cost: " + totalCost + " coins (" + unitCost + " x " + costMultiplier + ")"
                     : "Cost: " + totalCost + " coins";
             lore.add(Component.text(costText, costColor)
                     .decoration(TextDecoration.ITALIC, false));
@@ -177,7 +188,8 @@ public class SabotageGUI implements Listener {
 
             meta.lore(lore);
             icon.setItemMeta(meta);
-            inv.setItem(TYPE_SLOTS[i], icon);
+            inv.setItem(TYPE_SLOTS[slotIndex], icon);
+            slotIndex++;
         }
 
         attacker.openInventory(inv);
@@ -259,9 +271,12 @@ public class SabotageGUI implements Listener {
     }
 
     private SabotageType getTypeForSlot(int slot) {
-        SabotageType[] types = SabotageType.values();
-        for (int i = 0; i < TYPE_SLOTS.length && i < types.length; i++) {
-            if (TYPE_SLOTS[i] == slot) return types[i];
+        int slotIndex = 0;
+        for (SabotageType type : SabotageType.values()) {
+            if (slotIndex >= TYPE_SLOTS.length) break;
+            if (!sabotageConfig.isTypeEnabled(type)) continue;
+            if (TYPE_SLOTS[slotIndex] == slot) return type;
+            slotIndex++;
         }
         return null;
     }

@@ -1,0 +1,24 @@
+# ==============================================
+# RandomItem - Main Configuration
+# ==============================================
+
+# Whether instant-break blocks (leaves, grass, flowers, etc.) give random drops.
+# These blocks can be broken very quickly, which massively unbalances the economy.
+# Set to false to make them drop nothing (or their vanilla drop).
+allow-instant-break-drops: false
+
+# Items that will never appear as random drops.
+# Useful for removing destructive mobs/eggs from the drop pool.
+# Use Bukkit Material names: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+banned-items:
+  - GHAST_SPAWN_EGG
+  - WITHER_SPAWN_EGG
+  - ENDER_DRAGON_SPAWN_EGG
+  - WITHER_SKELETON_SKULL
+
+# Entity types that will never be spawned by the 30% spawn-egg mechanic.
+# Use Bukkit EntityType names.
+banned-mob-spawns:
+  - GHAST
+  - WITHER
+  - ENDER_DRAGON

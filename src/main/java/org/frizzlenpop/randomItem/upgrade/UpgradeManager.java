@@ -33,12 +33,14 @@ public class UpgradeManager implements Listener {
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private final RandomItem plugin;
     private final CoinManager coinManager;
+    private final UpgradeConfig upgradeConfig;
     private final File file;
     private final Map<UUID, PlayerUpgradeData> data = new HashMap<>();
 
-    public UpgradeManager(RandomItem plugin, CoinManager coinManager) {
+    public UpgradeManager(RandomItem plugin, CoinManager coinManager, UpgradeConfig upgradeConfig) {
         this.plugin = plugin;
         this.coinManager = coinManager;
+        this.upgradeConfig = upgradeConfig;
         plugin.getDataFolder().mkdirs();
         this.file = new File(plugin.getDataFolder(), "upgrades.json");
         load();
@@ -47,6 +49,10 @@ public class UpgradeManager implements Listener {
 
         // Magnet upgrade tick — every 0.5 seconds, pull nearby items toward players
         plugin.getServer().getScheduler().runTaskTimer(plugin, this::tickMagnet, 20L, 10L);
+    }
+
+    public UpgradeConfig getUpgradeConfig() {
+        return upgradeConfig;
     }
 
     public int getLevel(UUID uuid, UpgradeType type) {
@@ -58,12 +64,12 @@ public class UpgradeManager implements Listener {
         PlayerUpgradeData playerData = getPlayerData(uuid);
         int currentLevel = playerData.getLevel(type);
 
-        if (currentLevel >= type.getMaxLevel()) {
+        if (currentLevel >= upgradeConfig.getMaxLevel(type)) {
             player.sendMessage(Component.text("Already maxed!", NamedTextColor.RED));
             return false;
         }
 
-        int cost = type.getCost(currentLevel);
+        int cost = upgradeConfig.getCost(type, currentLevel);
         if (!coinManager.removeCoins(uuid, cost)) {
             player.sendMessage(Component.text("Not enough coins! Need " + cost, NamedTextColor.RED));
             return false;

@@ -74,7 +74,7 @@ public enum SabotageType {
 
     public String getDisplayName() { return displayName; }
     public Material getIcon() { return icon; }
-    public int getCost() { return cost; }
-    public int getDurationSeconds() { return durationSeconds; }
+    public int getDefaultCost() { return cost; }
+    public int getDefaultDuration() { return durationSeconds; }
     public String getDescription() { return description; }
 }

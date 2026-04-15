@@ -6,7 +6,14 @@
       "Read(//c/Program Files/**)",
       "Bash(JAVA_HOME=\"/c/Users/frizz/.jdks/ms-25.0.2\" ./gradlew build)",
       "WebFetch(domain:repo.papermc.io)",
-      "Bash(grep -E \"\\\\.yml$\")"
+      "Bash(grep -E \"\\\\.yml$\")",
+      "Bash(xargs grep:*)",
+      "Bash(grep -E \"\\\\.yml$|\\\\.yaml$\")",
+      "Bash(mvn compile:*)",
+      "Bash(ls C:/Users/frizz/IdeaProjects/RandomItem/pom.xml C:/Users/frizz/IdeaProjects/RandomItem/build.gradle* C:/Users/frizz/IdeaProjects/RandomItem/gradlew*)",
+      "Bash(./gradlew compileJava)",
+      "Bash(JAVA_HOME=\"C:/Users/frizz/.jdks/ms-25.0.2\" ./gradlew compileJava)",
+      "Bash(JAVA_HOME=\"C:/Users/frizz/.jdks/ms-25.0.2\" ./gradlew build)"
     ]
   }
 }
